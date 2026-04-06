@@ -1,0 +1,98 @@
+# DORA ↔ NIS2 control mappings
+# High confidence — same EU legislative package, intentional alignment
+
+[[mappings]]
+source = "DORA-ART-5"
+target = "NIS2-ART-21"
+relationship = "Equivalent"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-6"
+target = "NIS2-ART-21"
+relationship = "Partial"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-9"
+target = "NIS2-ART-21"
+relationship = "Partial"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-10"
+target = "NIS2-ART-21"
+relationship = "Partial"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-11"
+target = "NIS2-ART-21"
+relationship = "Partial"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-17"
+target = "NIS2-ART-23"
+relationship = "Equivalent"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-19"
+target = "NIS2-ART-23"
+relationship = "Partial"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-20"
+target = "NIS2-ART-23"
+relationship = "Equivalent"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-24"
+target = "NIS2-ART-21"
+relationship = "Partial"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-25"
+target = "NIS2-ART-21"
+relationship = "Partial"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-28"
+target = "NIS2-ART-21"
+relationship = "Partial"
+confidence = "High"
+direction = "SourceToTarget"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-13"
+target = "NIS2-ART-23"
+relationship = "Partial"
+confidence = "Medium"
+direction = "Bidirectional"
+provenance = "Manual"

@@ -1,0 +1,34 @@
+# DORA ↔ GDPR Art.32/35 mappings
+# Narrow scope — GDPR testing relevance is limited
+
+[[mappings]]
+source = "DORA-ART-5"
+target = "GDPR-ART-32"
+relationship = "Partial"
+confidence = "Medium"
+direction = "Bidirectional"
+provenance = "Manual"
+
+[[mappings]]
+source = "DORA-ART-9"
+target = "GDPR-ART-32"
+relationship = "Partial"
+confidence = "Medium"
+direction = "Bidirectional"
+provenance = "Manual"
+
+[[mappings]]
+source = "DORA-ART-24"
+target = "GDPR-ART-35"
+relationship = "Partial"
+confidence = "Low"
+direction = "Bidirectional"
+provenance = "Manual"
+
+[[mappings]]
+source = "DORA-ART-25"
+target = "GDPR-ART-32"
+relationship = "Partial"
+confidence = "Medium"
+direction = "Bidirectional"
+provenance = "Manual"

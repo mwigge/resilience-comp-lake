@@ -1,0 +1,162 @@
+# DORA ↔ ISO 27001:2022 control mappings
+# Provenance: EBA mapping guidelines + manual analysis
+
+[[mappings]]
+source = "DORA-ART-5"
+target = "ISO-A.5.2"
+relationship = "Partial"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-9"
+target = "ISO-A.8.7"
+relationship = "Partial"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-9"
+target = "ISO-A.8.20"
+relationship = "Partial"
+confidence = "Medium"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-10"
+target = "ISO-A.8.15"
+relationship = "Equivalent"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-10"
+target = "ISO-A.8.16"
+relationship = "Equivalent"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-11"
+target = "ISO-A.5.26"
+relationship = "Equivalent"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-17"
+target = "ISO-A.5.24"
+relationship = "Equivalent"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-19"
+target = "ISO-A.5.25"
+relationship = "Equivalent"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-20"
+target = "ISO-A.5.26"
+relationship = "Partial"
+confidence = "Medium"
+direction = "SourceToTarget"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-13"
+target = "ISO-A.5.27"
+relationship = "Equivalent"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-24"
+target = "ISO-A.8.29"
+relationship = "Equivalent"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-25"
+target = "ISO-A.8.8"
+relationship = "Equivalent"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-25"
+target = "ISO-A.8.29"
+relationship = "Partial"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-26"
+target = "ISO-A.5.35"
+relationship = "Partial"
+confidence = "Medium"
+direction = "Bidirectional"
+provenance = "Manual"
+
+[[mappings]]
+source = "DORA-ART-28"
+target = "ISO-A.5.19"
+relationship = "Equivalent"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-28"
+target = "ISO-A.5.21"
+relationship = "Partial"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-29"
+target = "ISO-A.5.22"
+relationship = "Partial"
+confidence = "Medium"
+direction = "Bidirectional"
+provenance = "Manual"
+
+[[mappings]]
+source = "DORA-ART-30"
+target = "ISO-A.5.20"
+relationship = "Equivalent"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "EbaMapping"
+
+[[mappings]]
+source = "DORA-ART-6"
+target = "ISO-A.8.9"
+relationship = "Partial"
+confidence = "Medium"
+direction = "Bidirectional"
+provenance = "Manual"
+
+[[mappings]]
+source = "DORA-ART-25"
+target = "ISO-A.8.25"
+relationship = "Partial"
+confidence = "Medium"
+direction = "Bidirectional"
+provenance = "Manual"
