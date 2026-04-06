@@ -1,0 +1,23 @@
+[package]
+name = "comp-lake-api"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "REST API (axum) and MCP server for the compliance data lake"
+
+[lints]
+workspace = true
+
+[dependencies]
+comp-lake-core = { path = "../comp-lake-core" }
+comp-lake-storage = { path = "../comp-lake-storage" }
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+uuid.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+axum.workspace = true
+tower-http.workspace = true
+tracing.workspace = true
