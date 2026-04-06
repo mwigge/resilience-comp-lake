@@ -99,8 +99,8 @@ mod tests {
     use super::*;
     use crate::models::control::{ControlId, Severity};
     use crate::models::evidence::{EvidenceId, EvidenceType, SourceSystem};
-    use crate::models::freshness::compute_expires_at;
     use crate::models::framework::FrameworkId;
+    use crate::models::freshness::compute_expires_at;
     use crate::scoring::badges::BadgeTier;
 
     fn fw_id() -> FrameworkId {
@@ -146,8 +146,7 @@ mod tests {
     fn empty_evidence_scores_zero() {
         let controls = vec![make_control("C1", true), make_control("C2", true)];
         let now = Utc::now();
-        let score =
-            compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &[], now);
+        let score = compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &[], now);
         assert!((score.score - 0.0).abs() < f64::EPSILON);
         assert_eq!(score.controls_total, 2);
         assert_eq!(score.controls_covered, 0);
@@ -160,16 +159,21 @@ mod tests {
         let controls = vec![make_control("C1", true), make_control("C2", true)];
         let now = Utc::now();
         let evidence = vec![
-            make_evidence("C1", EvidenceResult::Pass, now, EvidenceType::ChaosExperiment),
-            make_evidence("C2", EvidenceResult::Pass, now, EvidenceType::ChaosExperiment),
+            make_evidence(
+                "C1",
+                EvidenceResult::Pass,
+                now,
+                EvidenceType::ChaosExperiment,
+            ),
+            make_evidence(
+                "C2",
+                EvidenceResult::Pass,
+                now,
+                EvidenceType::ChaosExperiment,
+            ),
         ];
-        let score = compute_entity_framework_score(
-            &entity_id(),
-            &fw_id(),
-            &controls,
-            &evidence,
-            now,
-        );
+        let score =
+            compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &evidence, now);
         assert!((score.score - 100.0).abs() < f64::EPSILON);
         assert_eq!(score.controls_passing, 2);
         assert_eq!(score.badge, BadgeTier::Platinum);
@@ -186,13 +190,8 @@ mod tests {
             old,
             EvidenceType::ChaosExperiment, // 90-day freshness
         )];
-        let score = compute_entity_framework_score(
-            &entity_id(),
-            &fw_id(),
-            &controls,
-            &evidence,
-            now,
-        );
+        let score =
+            compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &evidence, now);
         assert!((score.score - 0.0).abs() < f64::EPSILON);
         assert_eq!(score.controls_stale, 1);
         assert_eq!(score.controls_covered, 0);
@@ -208,13 +207,8 @@ mod tests {
             now,
             EvidenceType::ChaosExperiment,
         )];
-        let score = compute_entity_framework_score(
-            &entity_id(),
-            &fw_id(),
-            &controls,
-            &evidence,
-            now,
-        );
+        let score =
+            compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &evidence, now);
         assert!((score.score - 0.0).abs() < f64::EPSILON);
         assert_eq!(score.controls_covered, 1);
         assert_eq!(score.controls_passing, 0);
@@ -225,26 +219,23 @@ mod tests {
         let controls = vec![make_control("C1", true)];
         let now = Utc::now();
         let evidence = vec![
-            make_evidence("C1", EvidenceResult::Fail, now, EvidenceType::ChaosExperiment),
+            make_evidence(
+                "C1",
+                EvidenceResult::Fail,
+                now,
+                EvidenceType::ChaosExperiment,
+            ),
             make_evidence("C1", EvidenceResult::Pass, now, EvidenceType::GameDay),
         ];
-        let score = compute_entity_framework_score(
-            &entity_id(),
-            &fw_id(),
-            &controls,
-            &evidence,
-            now,
-        );
+        let score =
+            compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &evidence, now);
         assert!((score.score - 100.0).abs() < f64::EPSILON);
         assert_eq!(score.controls_passing, 1);
     }
 
     #[test]
     fn non_testing_relevant_controls_excluded() {
-        let controls = vec![
-            make_control("C1", true),
-            make_control("C2", false),
-        ];
+        let controls = vec![make_control("C1", true), make_control("C2", false)];
         let now = Utc::now();
         let evidence = vec![make_evidence(
             "C1",
@@ -252,13 +243,8 @@ mod tests {
             now,
             EvidenceType::ChaosExperiment,
         )];
-        let score = compute_entity_framework_score(
-            &entity_id(),
-            &fw_id(),
-            &controls,
-            &evidence,
-            now,
-        );
+        let score =
+            compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &evidence, now);
         assert_eq!(score.controls_total, 1);
         assert!((score.score - 100.0).abs() < f64::EPSILON);
     }
@@ -273,18 +259,28 @@ mod tests {
         ];
         let now = Utc::now();
         let evidence = vec![
-            make_evidence("C1", EvidenceResult::Pass, now, EvidenceType::ChaosExperiment),
-            make_evidence("C2", EvidenceResult::Pass, now, EvidenceType::ChaosExperiment),
-            make_evidence("C3", EvidenceResult::Fail, now, EvidenceType::ChaosExperiment),
+            make_evidence(
+                "C1",
+                EvidenceResult::Pass,
+                now,
+                EvidenceType::ChaosExperiment,
+            ),
+            make_evidence(
+                "C2",
+                EvidenceResult::Pass,
+                now,
+                EvidenceType::ChaosExperiment,
+            ),
+            make_evidence(
+                "C3",
+                EvidenceResult::Fail,
+                now,
+                EvidenceType::ChaosExperiment,
+            ),
             // C4: no evidence
         ];
-        let score = compute_entity_framework_score(
-            &entity_id(),
-            &fw_id(),
-            &controls,
-            &evidence,
-            now,
-        );
+        let score =
+            compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &evidence, now);
         assert!((score.score - 50.0).abs() < f64::EPSILON);
         assert_eq!(score.controls_total, 4);
         assert_eq!(score.controls_covered, 3);
@@ -295,8 +291,7 @@ mod tests {
     #[test]
     fn no_controls_scores_zero() {
         let now = Utc::now();
-        let score =
-            compute_entity_framework_score(&entity_id(), &fw_id(), &[], &[], now);
+        let score = compute_entity_framework_score(&entity_id(), &fw_id(), &[], &[], now);
         assert!((score.score - 0.0).abs() < f64::EPSILON);
         assert_eq!(score.controls_total, 0);
     }

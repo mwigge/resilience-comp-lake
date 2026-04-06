@@ -273,7 +273,7 @@ mod tests {
     #[test]
     fn v_scores_correct_values() {
         let store = populated_store();
-        let (passing, total, score): (i64, i64, f64) = store
+        let (ctrl_passing, ctrl_total, pct): (i64, i64, f64) = store
             .conn()
             .query_row(
                 "SELECT controls_passing, controls_total, score FROM v_scores \
@@ -282,9 +282,9 @@ mod tests {
                 |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
             )
             .unwrap();
-        assert_eq!(total, 2);
-        assert_eq!(passing, 1);
-        assert!((score - 50.0).abs() < f64::EPSILON);
+        assert_eq!(ctrl_total, 2);
+        assert_eq!(ctrl_passing, 1);
+        assert!((pct - 50.0).abs() < f64::EPSILON);
     }
 
     #[test]

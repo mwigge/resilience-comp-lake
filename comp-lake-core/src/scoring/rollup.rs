@@ -32,10 +32,8 @@ pub fn rollup_scores(
         .collect();
 
     // Build entity_id -> entity map for type lookups
-    let entity_map: HashMap<&EntityId, &OrgEntity> = hierarchy
-        .iter()
-        .map(|e| (&e.entity_id, e))
-        .collect();
+    let entity_map: HashMap<&EntityId, &OrgEntity> =
+        hierarchy.iter().map(|e| (&e.entity_id, e)).collect();
 
     // Process parents in order: Team, Unit, Platform (bottom-up)
     let mut all_scores: HashMap<EntityId, ComplianceScore> = entity_scores
@@ -55,7 +53,9 @@ pub fn rollup_scores(
                 let child_scores: Vec<&ComplianceScore> = child_ids
                     .iter()
                     .filter_map(|cid| {
-                        all_scores.get(*cid).or_else(|| score_map.get(*cid).copied())
+                        all_scores
+                            .get(*cid)
+                            .or_else(|| score_map.get(*cid).copied())
                     })
                     .collect();
 
@@ -129,21 +129,17 @@ mod tests {
         FrameworkId::new("DORA").unwrap()
     }
 
-    fn make_score(entity: &str, score_val: f64) -> (EntityId, ComplianceScore) {
-        let total = 10;
-        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-        let passing = ((score_val / 100.0) * total as f64).round() as usize;
+    fn make_score(entity: &str, pct: f64) -> (EntityId, ComplianceScore) {
+        let total: usize = 10;
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_precision_loss)]
+        let passing = ((pct / 100.0) * total as f64).round() as usize;
         (
             EntityId::new(entity),
             ComplianceScore::new(fw(), total, passing, passing, 0),
         )
     }
 
-    fn make_entity(
-        id: &str,
-        entity_type: EntityType,
-        parent: Option<&str>,
-    ) -> OrgEntity {
+    fn make_entity(id: &str, entity_type: EntityType, parent: Option<&str>) -> OrgEntity {
         OrgEntity::new(
             EntityId::new(id),
             entity_type,
@@ -206,9 +202,7 @@ mod tests {
 
     #[test]
     fn empty_children_scores_zero() {
-        let hierarchy = vec![
-            make_entity("team-a", EntityType::Team, Some("unit-eng")),
-        ];
+        let hierarchy = vec![make_entity("team-a", EntityType::Team, Some("unit-eng"))];
         let scores: Vec<(EntityId, ComplianceScore)> = vec![];
         let rolled = rollup_scores(&scores, &hierarchy);
         // No children have scores, so no rollup produced

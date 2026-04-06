@@ -75,7 +75,10 @@ mod tests {
     fn stale_warning_over_25_percent() {
         let score = ComplianceScore::new(
             FrameworkId::new("DORA").unwrap(),
-            10, 6, 5, 3, // 3 stale out of 9 total evidence = 33%
+            10,
+            6,
+            5,
+            3, // 3 stale out of 9 total evidence = 33%
         );
         assert!(stale_warning(&score));
     }
@@ -84,27 +87,24 @@ mod tests {
     fn no_stale_warning_under_25_percent() {
         let score = ComplianceScore::new(
             FrameworkId::new("DORA").unwrap(),
-            10, 8, 7, 1, // 1 stale out of 9 total = 11%
+            10,
+            8,
+            7,
+            1, // 1 stale out of 9 total = 11%
         );
         assert!(!stale_warning(&score));
     }
 
     #[test]
     fn no_stale_warning_when_no_evidence() {
-        let score = ComplianceScore::new(
-            FrameworkId::new("DORA").unwrap(),
-            10, 0, 0, 0,
-        );
+        let score = ComplianceScore::new(FrameworkId::new("DORA").unwrap(), 10, 0, 0, 0);
         assert!(!stale_warning(&score));
     }
 
     #[test]
     fn stale_warning_at_boundary() {
         // 1 stale out of 4 total = 25% exactly — should NOT warn (> not >=)
-        let score = ComplianceScore::new(
-            FrameworkId::new("DORA").unwrap(),
-            10, 3, 3, 1,
-        );
+        let score = ComplianceScore::new(FrameworkId::new("DORA").unwrap(), 10, 3, 3, 1);
         assert!(!stale_warning(&score));
     }
 

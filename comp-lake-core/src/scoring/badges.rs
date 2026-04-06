@@ -65,9 +65,9 @@ pub fn evaluate_cross_badges(scores: &[ComplianceScore]) -> Vec<CrossFrameworkBa
     }
 
     let eu_frameworks = ["DORA", "NIS2", "CRA", "GDPR"];
-    let eu_all_silver = eu_frameworks.iter().all(|id| {
-        find(id).is_some_and(|s| s.badge >= BadgeTier::Silver)
-    });
+    let eu_all_silver = eu_frameworks
+        .iter()
+        .all(|id| find(id).is_some_and(|s| s.badge >= BadgeTier::Silver));
     if eu_all_silver {
         badges.push(CrossFrameworkBadge::EuCompliant);
     }
@@ -102,10 +102,10 @@ mod tests {
         assert_eq!(BadgeTier::from_score(100.0), BadgeTier::Platinum);
     }
 
-    fn make_score(id: &str, score: f64) -> ComplianceScore {
-        let total = 100;
-        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
-        let passing = ((score / 100.0) * total as f64) as usize;
+    fn make_score(id: &str, pct: f64) -> ComplianceScore {
+        let total: usize = 100;
+        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_precision_loss)]
+        let passing = ((pct / 100.0) * total as f64) as usize;
         ComplianceScore::new(FrameworkId::new(id).unwrap(), total, passing, passing, 0)
     }
 
@@ -130,20 +130,14 @@ mod tests {
 
     #[test]
     fn cross_badge_full_spectrum() {
-        let scores = vec![
-            make_score("DORA", 55.0),
-            make_score("NIST-800-53", 60.0),
-        ];
+        let scores = vec![make_score("DORA", 55.0), make_score("NIST-800-53", 60.0)];
         let badges = evaluate_cross_badges(&scores);
         assert!(badges.contains(&CrossFrameworkBadge::FullSpectrum));
     }
 
     #[test]
     fn cross_badge_resilience_leader() {
-        let scores = vec![
-            make_score("DORA", 90.0),
-            make_score("NIST-800-53", 88.0),
-        ];
+        let scores = vec![make_score("DORA", 90.0), make_score("NIST-800-53", 88.0)];
         let badges = evaluate_cross_badges(&scores);
         assert!(badges.contains(&CrossFrameworkBadge::ResilienceLeader));
     }
