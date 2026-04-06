@@ -111,7 +111,8 @@ pub enum HarvestError {
 /// Each harvester fetches framework data from an authoritative source and
 /// normalises it into the compliance data lake's domain types.
 ///
-/// Uses boxed futures for object safety (`dyn Harvester`).
+/// Uses boxed futures to preserve object safety (`dyn Harvester`).
+/// Native `async fn` in traits is not object-safe in Rust.
 pub trait Harvester: Send + Sync {
     /// Human-readable name of this harvester.
     fn name(&self) -> &'static str;

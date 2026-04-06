@@ -40,6 +40,17 @@ pub enum EntityType {
     Project,
 }
 
+impl std::fmt::Display for EntityType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::Platform => "Platform",
+            Self::Unit => "Unit",
+            Self::Team => "Team",
+            Self::Project => "Project",
+        })
+    }
+}
+
 impl EntityType {
     #[must_use]
     fn rank(self) -> u8 {

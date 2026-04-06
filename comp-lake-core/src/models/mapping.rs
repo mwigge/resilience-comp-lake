@@ -11,6 +11,17 @@ pub enum MappingRelationship {
     DerivedFrom,
 }
 
+impl std::fmt::Display for MappingRelationship {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::Equivalent => "Equivalent",
+            Self::Partial => "Partial",
+            Self::Supplements => "Supplements",
+            Self::DerivedFrom => "DerivedFrom",
+        })
+    }
+}
+
 /// Confidence level of a cross-framework control mapping.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Confidence {
@@ -31,11 +42,30 @@ impl Confidence {
     }
 }
 
+impl std::fmt::Display for Confidence {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::Low => "Low",
+            Self::Medium => "Medium",
+            Self::High => "High",
+        })
+    }
+}
+
 /// Direction of a control mapping.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MappingDirection {
     Bidirectional,
     SourceToTarget,
+}
+
+impl std::fmt::Display for MappingDirection {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::Bidirectional => "Bidirectional",
+            Self::SourceToTarget => "SourceToTarget",
+        })
+    }
 }
 
 /// Where a mapping was sourced from.
@@ -45,6 +75,17 @@ pub enum MappingProvenance {
     NistOlir,
     OscalProfile,
     Manual,
+}
+
+impl std::fmt::Display for MappingProvenance {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::EbaMapping => "EbaMapping",
+            Self::NistOlir => "NistOlir",
+            Self::OscalProfile => "OscalProfile",
+            Self::Manual => "Manual",
+        })
+    }
 }
 
 /// A mapping between two controls in different frameworks.
