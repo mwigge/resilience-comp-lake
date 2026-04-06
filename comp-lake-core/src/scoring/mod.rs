@@ -1,5 +1,8 @@
 pub mod badges;
+pub mod cross_framework;
 pub mod engine;
+pub mod rollup;
+pub mod trend;
 
 use serde::{Deserialize, Serialize};
 
