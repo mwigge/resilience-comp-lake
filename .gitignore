@@ -1,0 +1,38 @@
+# Build
+/target/
+**/*.rs.bk
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# DuckDB data (generated)
+*.duckdb
+*.duckdb.wal
+
+# Parquet data (generated)
+data/frameworks/**/*.parquet
+data/evidence/**/*.parquet
+
+# Keep seed data
+!data/seed/**
+
+# Environment
+.env
+.env.*
+
+# Claude Code
+.claude/
+
+# OpenSpec (local workflow artifacts)
+openspec/
+
+# Distribution
+/dist/
