@@ -666,6 +666,7 @@ dependencies = [
  "comp-lake-core",
  "comp-lake-harvesters",
  "comp-lake-storage",
+ "duckdb",
  "serde_json",
  "tokio",
  "tracing",

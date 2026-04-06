@@ -40,9 +40,20 @@ impl HarvestConfig {
 }
 
 /// API keys loaded from environment variables.
-#[derive(Debug, Clone, Default)]
+#[derive(Clone, Default)]
 pub struct ApiKeys {
     pub nvd_api_key: Option<String>,
+}
+
+impl std::fmt::Debug for ApiKeys {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ApiKeys")
+            .field(
+                "nvd_api_key",
+                &self.nvd_api_key.as_ref().map(|_| "[REDACTED]"),
+            )
+            .finish()
+    }
 }
 
 /// Result of a harvest operation.

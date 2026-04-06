@@ -11,12 +11,15 @@ impl ControlId {
     ///
     /// # Errors
     ///
-    /// Returns `ControlIdError::Empty` if the provided string is empty.
+    /// Returns an error if the ID is empty or contains invalid characters.
     #[must_use = "returns the validated ControlId"]
     pub fn new(id: impl Into<String>) -> Result<Self, ControlIdError> {
         let id = id.into();
         if id.is_empty() {
             return Err(ControlIdError::Empty);
+        }
+        if !id.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == '.' || c == ':' || c == '(' || c == ')') {
+            return Err(ControlIdError::InvalidChars);
         }
         Ok(Self(id))
     }
@@ -37,6 +40,8 @@ impl std::fmt::Display for ControlId {
 pub enum ControlIdError {
     #[error("control ID must not be empty")]
     Empty,
+    #[error("control ID contains invalid characters")]
+    InvalidChars,
 }
 
 /// Severity level of a control.

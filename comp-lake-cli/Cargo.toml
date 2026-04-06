@@ -19,6 +19,7 @@ comp-lake-storage = { path = "../comp-lake-storage" }
 comp-lake-harvesters = { path = "../comp-lake-harvesters" }
 comp-lake-api = { path = "../comp-lake-api" }
 clap.workspace = true
+duckdb.workspace = true
 tokio.workspace = true
 anyhow.workspace = true
 chrono.workspace = true
