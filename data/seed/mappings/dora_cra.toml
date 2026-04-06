@@ -1,0 +1,65 @@
+# DORA ↔ CRA control mappings
+
+[[mappings]]
+source = "DORA-ART-5"
+target = "CRA-ART-10"
+relationship = "Partial"
+confidence = "Medium"
+direction = "Bidirectional"
+provenance = "Manual"
+
+[[mappings]]
+source = "DORA-ART-6"
+target = "CRA-ART-10"
+relationship = "Partial"
+confidence = "Medium"
+direction = "Bidirectional"
+provenance = "Manual"
+
+[[mappings]]
+source = "DORA-ART-9"
+target = "CRA-ART-11"
+relationship = "Partial"
+confidence = "Medium"
+direction = "Bidirectional"
+provenance = "Manual"
+
+[[mappings]]
+source = "DORA-ART-10"
+target = "CRA-ART-12"
+relationship = "Partial"
+confidence = "Medium"
+direction = "Bidirectional"
+provenance = "Manual"
+
+[[mappings]]
+source = "DORA-ART-17"
+target = "CRA-ART-14"
+relationship = "Partial"
+confidence = "Medium"
+direction = "Bidirectional"
+provenance = "Manual"
+
+[[mappings]]
+source = "DORA-ART-28"
+target = "CRA-ART-13"
+relationship = "Equivalent"
+confidence = "High"
+direction = "Bidirectional"
+provenance = "Manual"
+
+[[mappings]]
+source = "DORA-ART-25"
+target = "CRA-ART-11"
+relationship = "Partial"
+confidence = "Medium"
+direction = "Bidirectional"
+provenance = "Manual"
+
+[[mappings]]
+source = "DORA-ART-30"
+target = "CRA-ART-13"
+relationship = "Partial"
+confidence = "Medium"
+direction = "Bidirectional"
+provenance = "Manual"

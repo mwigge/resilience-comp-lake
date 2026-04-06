@@ -1,0 +1,157 @@
+[framework]
+id = "DORA"
+name = "Digital Operational Resilience Act"
+version = "2022/2554"
+region = "eu"
+authority = "European Parliament"
+
+# Testing-relevant DORA articles
+
+[[controls]]
+id = "DORA-ART-5"
+title = "ICT risk management framework"
+description = "Financial entities shall have a sound, comprehensive and well-documented ICT risk management framework"
+family = "Risk Management"
+severity = "High"
+
+[[controls]]
+id = "DORA-ART-6"
+title = "ICT systems, protocols and tools"
+description = "ICT systems and tools shall be kept up to date, reliable, and have sufficient capacity"
+family = "Risk Management"
+severity = "High"
+
+[[controls]]
+id = "DORA-ART-9"
+title = "Protection and prevention"
+description = "ICT risk management framework shall include policies for protection and prevention"
+family = "Risk Management"
+severity = "High"
+
+[[controls]]
+id = "DORA-ART-10"
+title = "Detection"
+description = "Mechanisms to detect anomalous activities and ICT-related incidents"
+family = "Risk Management"
+severity = "High"
+
+[[controls]]
+id = "DORA-ART-11"
+title = "Response and recovery"
+description = "ICT business continuity policy and ICT response and recovery plans"
+family = "Risk Management"
+severity = "High"
+
+[[controls]]
+id = "DORA-ART-12"
+title = "Backup policies and recovery methods"
+description = "Backup and restoration procedures for ICT systems"
+family = "Risk Management"
+severity = "Moderate"
+
+[[controls]]
+id = "DORA-ART-13"
+title = "Learning and evolving"
+description = "Post-incident reviews and incorporation of lessons learned"
+family = "Risk Management"
+severity = "Moderate"
+
+[[controls]]
+id = "DORA-ART-17"
+title = "ICT-related incident management process"
+description = "Establish and implement an ICT-related incident management process"
+family = "Incident Management"
+severity = "High"
+
+[[controls]]
+id = "DORA-ART-19"
+title = "Classification of ICT-related incidents"
+description = "Classify ICT-related incidents based on criteria including impact and duration"
+family = "Incident Management"
+severity = "High"
+
+[[controls]]
+id = "DORA-ART-20"
+title = "Reporting of major ICT-related incidents"
+description = "Report major ICT-related incidents to competent authority"
+family = "Incident Management"
+severity = "High"
+
+[[controls]]
+id = "DORA-ART-21"
+title = "Centralisation of reporting of major incidents"
+description = "Joint committee shall develop a single EU hub for incident reporting"
+family = "Incident Management"
+severity = "Moderate"
+
+[[controls]]
+id = "DORA-ART-24"
+title = "General requirements for ICT testing"
+description = "Establish and maintain a programme for ICT testing as part of the ICT risk management framework"
+family = "Resilience Testing"
+severity = "High"
+
+[[controls]]
+id = "DORA-ART-25"
+title = "Testing of ICT tools and systems"
+description = "ICT testing programme shall include vulnerability assessments, network security assessments, and penetration testing"
+family = "Resilience Testing"
+severity = "High"
+
+[[controls]]
+id = "DORA-ART-26"
+title = "Advanced testing of ICT tools, systems and processes (TLPT)"
+description = "Threat-led penetration testing (TLPT) for identified critical or important functions"
+family = "Resilience Testing"
+severity = "High"
+
+[[controls]]
+id = "DORA-ART-27"
+title = "Requirements for testers for TLPT"
+description = "Testers for TLPT shall meet requirements including certification and independence"
+family = "Resilience Testing"
+severity = "Moderate"
+
+[[controls]]
+id = "DORA-ART-28"
+title = "General principles for ICT third-party risk management"
+description = "Manage ICT third-party risk as integral component of ICT risk management framework"
+family = "Third-Party Risk"
+severity = "High"
+
+[[controls]]
+id = "DORA-ART-29"
+title = "Preliminary assessment of ICT concentration risk"
+description = "Assess concentration risk arising from ICT third-party service providers"
+family = "Third-Party Risk"
+severity = "Moderate"
+
+[[controls]]
+id = "DORA-ART-30"
+title = "Key contractual provisions"
+description = "Contractual arrangements for use of ICT services shall include provisions on security"
+family = "Third-Party Risk"
+severity = "Moderate"
+
+[[controls]]
+id = "DORA-ART-14"
+title = "Communication"
+description = "Communication policies for responsible disclosure of ICT vulnerabilities"
+family = "Risk Management"
+severity = "Moderate"
+
+[[controls]]
+id = "DORA-ART-15"
+title = "Further harmonisation of ICT risk management tools"
+description = "ESAs shall develop regulatory technical standards on ICT risk management"
+family = "Risk Management"
+severity = "Low"
+testing_relevant = false
+
+[[controls]]
+id = "DORA-ART-16"
+title = "Simplified ICT risk management framework"
+description = "Simplified framework for certain financial entities below significance thresholds"
+family = "Risk Management"
+severity = "Low"
+testing_relevant = false
