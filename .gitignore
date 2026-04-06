@@ -33,6 +33,7 @@ data/evidence/**/*.parquet
 
 # OpenSpec (local workflow artifacts)
 openspec/
+docs_local/
 
 # Distribution
 /dist/
