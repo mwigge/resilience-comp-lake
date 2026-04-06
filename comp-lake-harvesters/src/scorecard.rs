@@ -67,7 +67,8 @@ async fn harvest_scorecard(
         }
     }
 
-    let framework_id = FrameworkId::new("OSSF-SCORECARD").unwrap();
+    let framework_id = FrameworkId::new("OSSF-SCORECARD")
+        .map_err(|e| HarvestError::Parse(e.to_string()))?;
     let framework = comp_lake_core::models::framework::Framework::builder(
         framework_id,
         "OpenSSF Scorecard",

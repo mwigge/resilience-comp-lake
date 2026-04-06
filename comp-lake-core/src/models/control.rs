@@ -57,9 +57,14 @@ pub enum Severity {
 pub struct ControlFamily(String);
 
 impl ControlFamily {
+    /// # Panics
+    ///
+    /// Panics if `family` is empty.
     #[must_use]
     pub fn new(family: impl Into<String>) -> Self {
-        Self(family.into())
+        let family = family.into();
+        assert!(!family.is_empty(), "ControlFamily must not be empty");
+        Self(family)
     }
 
     #[must_use]

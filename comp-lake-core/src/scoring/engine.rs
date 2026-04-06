@@ -12,7 +12,7 @@ use crate::models::org::EntityId;
 ///
 /// Logic:
 /// - Only controls where `testing_relevant = true` count
-/// - Only evidence where `expires_at > now` counts (fresh)
+/// - Only evidence where `expires_at >= now` counts (fresh)
 /// - Multiple evidence per (entity, control): best fresh result wins
 /// - Score = (`controls_passing` / `controls_total`) * 100
 /// - `Partial` counts toward `controls_covered` but NOT `controls_passing`
@@ -43,7 +43,7 @@ pub fn compute_entity_framework_score(
             continue;
         }
 
-        let fresh = ev.expires_at > now;
+        let fresh = ev.expires_at >= now;
         let entry = best_per_control
             .entry(&ev.control_id)
             .or_insert(BestEvidence {

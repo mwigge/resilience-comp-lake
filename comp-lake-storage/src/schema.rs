@@ -129,6 +129,12 @@ CREATE TABLE IF NOT EXISTS evidence (
     expires_at    TIMESTAMP NOT NULL
 );
 
+-- Indexes for analytical view performance
+CREATE INDEX IF NOT EXISTS idx_evidence_entity_control ON evidence(entity_id, control_id);
+CREATE INDEX IF NOT EXISTS idx_evidence_expires ON evidence(expires_at);
+CREATE INDEX IF NOT EXISTS idx_controls_framework ON controls(framework_id, testing_relevant);
+CREATE INDEX IF NOT EXISTS idx_org_parent ON org_hierarchy(parent_id);
+
 CREATE TABLE IF NOT EXISTS harvest_log (
     harvest_id       VARCHAR PRIMARY KEY,
     framework_id     VARCHAR NOT NULL REFERENCES frameworks,

@@ -5,7 +5,6 @@ use chrono::{DateTime, Utc};
 use super::ComplianceScore;
 use crate::models::control::{Control, ControlId};
 use crate::models::evidence::{Evidence, EvidenceResult};
-use crate::models::framework::FrameworkId;
 use crate::models::mapping::{Confidence, ControlMapping};
 use crate::models::org::EntityId;
 
@@ -40,7 +39,7 @@ pub fn enhance_with_mappings(
         build_direct_coverage(entity_id, &relevant_controls, all_evidence, now);
 
     // Build map: control_id -> set of mapped source control_ids (confidence >= Medium)
-    let mapping_index = build_mapping_index(framework_id, mappings);
+    let mapping_index = build_mapping_index(mappings);
 
     // Build set of control_ids with fresh passing evidence (any framework, this entity)
     let passing_controls = build_passing_controls(entity_id, all_evidence, now);
@@ -87,7 +86,7 @@ fn build_direct_coverage<'a>(
         .iter()
         .filter(|ev| {
             ev.entity_id == *entity_id
-                && ev.expires_at > now
+                && ev.expires_at >= now
                 && relevant_ids.contains(&ev.control_id)
         })
         .map(|ev| relevant_ids.get(&ev.control_id).copied().unwrap())
@@ -95,10 +94,9 @@ fn build_direct_coverage<'a>(
 }
 
 /// Build index: `target_control_id` -> set of `source_control_ids` from qualified mappings.
-fn build_mapping_index<'a>(
-    framework_id: &FrameworkId,
-    mappings: &'a [ControlMapping],
-) -> HashMap<&'a ControlId, Vec<&'a ControlId>> {
+fn build_mapping_index(
+    mappings: &[ControlMapping],
+) -> HashMap<&ControlId, Vec<&ControlId>> {
     let mut index: HashMap<&ControlId, Vec<&ControlId>> = HashMap::new();
 
     for m in mappings {
@@ -114,10 +112,6 @@ fn build_mapping_index<'a>(
             .push(&m.source_control);
     }
 
-    // Filter: only keep entries where the target is actually in our framework
-    // We rely on the caller to only pass relevant mappings, but for safety
-    // we don't filter here since we don't have framework_id on ControlId
-    let _ = framework_id;
     index
 }
 
@@ -130,7 +124,7 @@ fn build_passing_controls<'a>(
     evidence
         .iter()
         .filter(|ev| {
-            ev.entity_id == *entity_id && ev.expires_at > now && ev.result == EvidenceResult::Pass
+            ev.entity_id == *entity_id && ev.expires_at >= now && ev.result == EvidenceResult::Pass
         })
         .map(|ev| &ev.control_id)
         .collect()
@@ -141,6 +135,7 @@ mod tests {
     use super::*;
     use crate::models::control::Severity;
     use crate::models::evidence::{EvidenceId, EvidenceType, SourceSystem};
+    use crate::models::framework::FrameworkId;
     use crate::models::freshness::compute_expires_at;
     use crate::models::mapping::{MappingDirection, MappingProvenance, MappingRelationship};
     use crate::scoring::engine::compute_entity_framework_score;
