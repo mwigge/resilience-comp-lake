@@ -1,1 +1,2 @@
-// DuckDB + Parquet storage — filled in by T0.6
+pub mod schema;
+pub mod store;
