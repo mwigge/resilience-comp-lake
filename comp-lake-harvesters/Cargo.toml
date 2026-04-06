@@ -1,0 +1,20 @@
+[package]
+name = "comp-lake-harvesters"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Framework harvesters — EUR-Lex CELLAR, NIST OSCAL, NVD, OpenSSF Scorecard"
+
+[lints]
+workspace = true
+
+[dependencies]
+comp-lake-core = { path = "../comp-lake-core" }
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+thiserror.workspace = true
+reqwest.workspace = true
+tokio.workspace = true
+tracing.workspace = true

@@ -1,0 +1,25 @@
+[package]
+name = "comp-lake-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "CLI for the compliance data lake — harvest, score, export, serve"
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "comp-lake"
+path = "src/main.rs"
+
+[dependencies]
+comp-lake-core = { path = "../comp-lake-core" }
+comp-lake-storage = { path = "../comp-lake-storage" }
+comp-lake-harvesters = { path = "../comp-lake-harvesters" }
+comp-lake-api = { path = "../comp-lake-api" }
+clap.workspace = true
+tokio.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
