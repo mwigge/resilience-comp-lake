@@ -55,9 +55,12 @@ pub fn export_duckdb_file(
         .to_str()
         .ok_or_else(|| ExportError::InvalidPath(output_path.to_path_buf()))?;
 
+    // Escape single quotes in path to prevent SQL injection
+    let escaped = output_str.replace('\'', "''");
+
     // DuckDB can copy itself by attaching a new database and copying tables
     conn.execute_batch(&format!(
-        "ATTACH '{output_str}' AS export_db;
+        "ATTACH '{escaped}' AS export_db;
          CREATE TABLE export_db.frameworks AS SELECT * FROM frameworks;
          CREATE TABLE export_db.controls AS SELECT * FROM controls;
          CREATE TABLE export_db.control_mappings AS SELECT * FROM control_mappings;

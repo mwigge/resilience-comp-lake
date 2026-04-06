@@ -135,20 +135,23 @@ fn cmd_score(
     entity: &str,
     framework: Option<&str>,
 ) -> anyhow::Result<()> {
-    let query = if let Some(fw) = framework {
-        format!(
+    let (query, params): (&str, Vec<String>) = if let Some(fw) = framework {
+        (
             "SELECT framework_id, score, controls_total, controls_passing, controls_stale, badge \
-             FROM v_scores WHERE entity_id = '{entity}' AND framework_id = '{fw}'"
+             FROM v_scores WHERE entity_id = ? AND framework_id = ? ORDER BY framework_id",
+            vec![entity.to_owned(), fw.to_owned()],
         )
     } else {
-        format!(
+        (
             "SELECT framework_id, score, controls_total, controls_passing, controls_stale, badge \
-             FROM v_scores WHERE entity_id = '{entity}' ORDER BY framework_id"
+             FROM v_scores WHERE entity_id = ? ORDER BY framework_id",
+            vec![entity.to_owned()],
         )
     };
 
-    let mut stmt = store.conn().prepare(&query)?;
-    let rows = stmt.query_map([], |row| {
+    let mut stmt = store.conn().prepare(query)?;
+    let param_refs: Vec<&dyn duckdb::ToSql> = params.iter().map(|p| p as &dyn duckdb::ToSql).collect();
+    let rows = stmt.query_map(param_refs.as_slice(), |row| {
         Ok((
             row.get::<_, String>(0)?,
             row.get::<_, f64>(1)?,
@@ -187,13 +190,11 @@ fn cmd_gaps(
     store: &comp_lake_storage::store::CompLakeStore,
     entity: &str,
 ) -> anyhow::Result<()> {
-    let query = format!(
+    let mut stmt = store.conn().prepare(
         "SELECT priority_rank, framework_name, control_id, title, severity, gap_reason \
-         FROM v_coverage_gaps WHERE entity_id = '{entity}' ORDER BY priority_rank LIMIT 20"
-    );
-
-    let mut stmt = store.conn().prepare(&query)?;
-    let rows = stmt.query_map([], |row| {
+         FROM v_coverage_gaps WHERE entity_id = ? ORDER BY priority_rank LIMIT 20",
+    )?;
+    let rows = stmt.query_map([entity], |row| {
         Ok((
             row.get::<_, i64>(0)?,
             row.get::<_, String>(1)?,

@@ -10,12 +10,15 @@ impl FrameworkId {
     ///
     /// # Errors
     ///
-    /// Returns `FrameworkIdError::Empty` if the provided string is empty.
+    /// Returns an error if the ID is empty or contains invalid characters.
     #[must_use = "returns the validated FrameworkId"]
     pub fn new(id: impl Into<String>) -> Result<Self, FrameworkIdError> {
         let id = id.into();
         if id.is_empty() {
             return Err(FrameworkIdError::Empty);
+        }
+        if !id.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == '.') {
+            return Err(FrameworkIdError::InvalidChars);
         }
         Ok(Self(id))
     }
@@ -36,6 +39,8 @@ impl std::fmt::Display for FrameworkId {
 pub enum FrameworkIdError {
     #[error("framework ID must not be empty")]
     Empty,
+    #[error("framework ID contains invalid characters (only alphanumeric, hyphens, underscores, dots allowed)")]
+    InvalidChars,
 }
 
 /// Geographic region a framework applies to.

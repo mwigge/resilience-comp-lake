@@ -167,12 +167,26 @@ impl CompLakeStore {
         Ok(())
     }
 
-    /// Count rows in a table.
+    /// Count rows in a known table. Table name is validated against an allowlist.
     ///
     /// # Errors
     ///
-    /// Returns a `DuckDB` error on query failure.
+    /// Returns a `DuckDB` error on query failure or if the table name is unknown.
     pub fn count(&self, table: &str) -> duckdb::Result<usize> {
+        const ALLOWED: &[&str] = &[
+            "frameworks",
+            "controls",
+            "control_mappings",
+            "org_hierarchy",
+            "evidence",
+            "harvest_log",
+            "schema_meta",
+        ];
+        if !ALLOWED.contains(&table) {
+            return Err(duckdb::Error::InvalidParameterName(
+                format!("unknown table: {table}"),
+            ));
+        }
         let sql = format!("SELECT COUNT(*) FROM {table}");
         self.conn.query_row(&sql, [], |row| row.get::<_, usize>(0))
     }
