@@ -52,6 +52,16 @@ pub enum Severity {
     Low,
 }
 
+impl std::fmt::Display for Severity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::High => f.write_str("High"),
+            Self::Moderate => f.write_str("Moderate"),
+            Self::Low => f.write_str("Low"),
+        }
+    }
+}
+
 /// Logical grouping of controls within a framework.
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct ControlFamily(String);

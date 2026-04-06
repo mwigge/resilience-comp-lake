@@ -52,12 +52,38 @@ pub enum EvidenceType {
     IntegrationTest,
 }
 
+impl std::fmt::Display for EvidenceType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::ChaosExperiment => "ChaosExperiment",
+            Self::GameDay => "GameDay",
+            Self::PenTest => "PenTest",
+            Self::VulnScan => "VulnScan",
+            Self::DoraMetric => "DoraMetric",
+            Self::Scorecard => "Scorecard",
+            Self::AuditFinding => "AuditFinding",
+            Self::UnitTest => "UnitTest",
+            Self::IntegrationTest => "IntegrationTest",
+        })
+    }
+}
+
 /// Outcome of an evidence assessment.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum EvidenceResult {
     Pass,
     Fail,
     Partial,
+}
+
+impl std::fmt::Display for EvidenceResult {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Pass => f.write_str("Pass"),
+            Self::Fail => f.write_str("Fail"),
+            Self::Partial => f.write_str("Partial"),
+        }
+    }
 }
 
 impl EvidenceResult {

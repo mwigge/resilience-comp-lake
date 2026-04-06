@@ -51,6 +51,16 @@ pub enum Region {
     Us,
 }
 
+impl std::fmt::Display for Region {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Eu => f.write_str("Eu"),
+            Self::Global => f.write_str("Global"),
+            Self::Us => f.write_str("Us"),
+        }
+    }
+}
+
 /// Source from which a framework is harvested.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum HarvestSource {
@@ -59,6 +69,18 @@ pub enum HarvestSource {
     NvdApi,
     ScorecardApi,
     Manual,
+}
+
+impl std::fmt::Display for HarvestSource {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::CellarSparql => f.write_str("CellarSparql"),
+            Self::OscalGithub => f.write_str("OscalGithub"),
+            Self::NvdApi => f.write_str("NvdApi"),
+            Self::ScorecardApi => f.write_str("ScorecardApi"),
+            Self::Manual => f.write_str("Manual"),
+        }
+    }
 }
 
 /// A compliance framework (e.g. DORA, ISO 27001, NIST 800-53).

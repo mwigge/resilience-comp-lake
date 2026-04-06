@@ -83,7 +83,9 @@ CREATE TABLE IF NOT EXISTS frameworks (
     celex_id       VARCHAR,
     eli_uri        VARCHAR,
     harvest_source VARCHAR NOT NULL,
-    last_harvested TIMESTAMP
+    last_harvested TIMESTAMP,
+    created_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at     TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS controls (
@@ -96,7 +98,9 @@ CREATE TABLE IF NOT EXISTS controls (
     family           VARCHAR,
     severity         VARCHAR NOT NULL,
     testing_relevant BOOLEAN NOT NULL DEFAULT false,
-    parent_id        VARCHAR REFERENCES controls
+    parent_id        VARCHAR REFERENCES controls,
+    created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS control_mappings (
