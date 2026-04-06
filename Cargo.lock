@@ -660,11 +660,13 @@ name = "comp-lake-cli"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "clap",
  "comp-lake-api",
  "comp-lake-core",
  "comp-lake-harvesters",
  "comp-lake-storage",
+ "serde_json",
  "tokio",
  "tracing",
  "tracing-subscriber",
