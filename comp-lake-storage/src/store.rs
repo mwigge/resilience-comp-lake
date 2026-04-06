@@ -174,8 +174,7 @@ impl CompLakeStore {
     /// Returns a `DuckDB` error on query failure.
     pub fn count(&self, table: &str) -> duckdb::Result<usize> {
         let sql = format!("SELECT COUNT(*) FROM {table}");
-        self.conn
-            .query_row(&sql, [], |row| row.get::<_, usize>(0))
+        self.conn.query_row(&sql, [], |row| row.get::<_, usize>(0))
     }
 }
 

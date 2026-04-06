@@ -80,25 +80,62 @@ pub fn scores_schema() -> Schema {
 /// # Errors
 ///
 /// Returns an Arrow error if batch construction fails.
-pub fn frameworks_to_record_batch(
-    frameworks: &[Framework],
-) -> arrow::error::Result<RecordBatch> {
+pub fn frameworks_to_record_batch(frameworks: &[Framework]) -> arrow::error::Result<RecordBatch> {
     let schema = Arc::new(frameworks_schema());
     RecordBatch::try_new(
         schema,
         vec![
-            Arc::new(StringArray::from_iter_values(frameworks.iter().map(|f| f.framework_id.as_str()))),
-            Arc::new(StringArray::from_iter_values(frameworks.iter().map(|f| f.name.as_str()))),
-            Arc::new(StringArray::from_iter_values(frameworks.iter().map(|f| f.version.as_str()))),
-            Arc::new(StringArray::from_iter_values(frameworks.iter().map(|f| format!("{:?}", f.region)))),
-            Arc::new(StringArray::from_iter_values(frameworks.iter().map(|f| f.authority.as_str()))),
-            Arc::new(BooleanArray::from(frameworks.iter().map(|f| f.is_pivot).collect::<Vec<_>>())),
-            Arc::new(StringArray::from(frameworks.iter().map(|f| f.effective_date.map(|d| d.format("%Y-%m-%d").to_string())).collect::<Vec<_>>())),
-            Arc::new(StringArray::from(frameworks.iter().map(|f| f.sunset_date.map(|d| d.format("%Y-%m-%d").to_string())).collect::<Vec<_>>())),
-            Arc::new(StringArray::from(frameworks.iter().map(|f| f.celex_id.clone()).collect::<Vec<_>>())),
-            Arc::new(StringArray::from(frameworks.iter().map(|f| f.eli_uri.clone()).collect::<Vec<_>>())),
-            Arc::new(StringArray::from_iter_values(frameworks.iter().map(|f| format!("{:?}", f.harvest_source)))),
-            Arc::new(StringArray::from(frameworks.iter().map(|f| f.last_harvested.map(|d| d.to_rfc3339())).collect::<Vec<_>>())),
+            Arc::new(StringArray::from_iter_values(
+                frameworks.iter().map(|f| f.framework_id.as_str()),
+            )),
+            Arc::new(StringArray::from_iter_values(
+                frameworks.iter().map(|f| f.name.as_str()),
+            )),
+            Arc::new(StringArray::from_iter_values(
+                frameworks.iter().map(|f| f.version.as_str()),
+            )),
+            Arc::new(StringArray::from_iter_values(
+                frameworks.iter().map(|f| format!("{:?}", f.region)),
+            )),
+            Arc::new(StringArray::from_iter_values(
+                frameworks.iter().map(|f| f.authority.as_str()),
+            )),
+            Arc::new(BooleanArray::from(
+                frameworks.iter().map(|f| f.is_pivot).collect::<Vec<_>>(),
+            )),
+            Arc::new(StringArray::from(
+                frameworks
+                    .iter()
+                    .map(|f| f.effective_date.map(|d| d.format("%Y-%m-%d").to_string()))
+                    .collect::<Vec<_>>(),
+            )),
+            Arc::new(StringArray::from(
+                frameworks
+                    .iter()
+                    .map(|f| f.sunset_date.map(|d| d.format("%Y-%m-%d").to_string()))
+                    .collect::<Vec<_>>(),
+            )),
+            Arc::new(StringArray::from(
+                frameworks
+                    .iter()
+                    .map(|f| f.celex_id.clone())
+                    .collect::<Vec<_>>(),
+            )),
+            Arc::new(StringArray::from(
+                frameworks
+                    .iter()
+                    .map(|f| f.eli_uri.clone())
+                    .collect::<Vec<_>>(),
+            )),
+            Arc::new(StringArray::from_iter_values(
+                frameworks.iter().map(|f| format!("{:?}", f.harvest_source)),
+            )),
+            Arc::new(StringArray::from(
+                frameworks
+                    .iter()
+                    .map(|f| f.last_harvested.map(|d| d.to_rfc3339()))
+                    .collect::<Vec<_>>(),
+            )),
         ],
     )
 }
@@ -108,23 +145,59 @@ pub fn frameworks_to_record_batch(
 /// # Errors
 ///
 /// Returns an Arrow error if batch construction fails.
-pub fn controls_to_record_batch(
-    controls: &[Control],
-) -> arrow::error::Result<RecordBatch> {
+pub fn controls_to_record_batch(controls: &[Control]) -> arrow::error::Result<RecordBatch> {
     let schema = Arc::new(controls_schema());
     RecordBatch::try_new(
         schema,
         vec![
-            Arc::new(StringArray::from_iter_values(controls.iter().map(|c| c.control_id.as_str()))),
-            Arc::new(StringArray::from_iter_values(controls.iter().map(|c| c.framework_id.as_str()))),
-            Arc::new(StringArray::from(controls.iter().map(|c| c.article_ref.clone()).collect::<Vec<_>>())),
-            Arc::new(StringArray::from(controls.iter().map(|c| c.chapter_ref.clone()).collect::<Vec<_>>())),
-            Arc::new(StringArray::from_iter_values(controls.iter().map(|c| c.title.as_str()))),
-            Arc::new(StringArray::from(controls.iter().map(|c| Some(c.description.as_str())).collect::<Vec<_>>())),
-            Arc::new(StringArray::from(controls.iter().map(|c| c.family.as_ref().map(|f| f.as_str().to_owned())).collect::<Vec<_>>())),
-            Arc::new(StringArray::from_iter_values(controls.iter().map(|c| format!("{:?}", c.severity)))),
-            Arc::new(BooleanArray::from(controls.iter().map(|c| c.testing_relevant).collect::<Vec<_>>())),
-            Arc::new(StringArray::from(controls.iter().map(|c| c.parent_id.as_ref().map(|p| p.as_str().to_owned())).collect::<Vec<_>>())),
+            Arc::new(StringArray::from_iter_values(
+                controls.iter().map(|c| c.control_id.as_str()),
+            )),
+            Arc::new(StringArray::from_iter_values(
+                controls.iter().map(|c| c.framework_id.as_str()),
+            )),
+            Arc::new(StringArray::from(
+                controls
+                    .iter()
+                    .map(|c| c.article_ref.clone())
+                    .collect::<Vec<_>>(),
+            )),
+            Arc::new(StringArray::from(
+                controls
+                    .iter()
+                    .map(|c| c.chapter_ref.clone())
+                    .collect::<Vec<_>>(),
+            )),
+            Arc::new(StringArray::from_iter_values(
+                controls.iter().map(|c| c.title.as_str()),
+            )),
+            Arc::new(StringArray::from(
+                controls
+                    .iter()
+                    .map(|c| Some(c.description.as_str()))
+                    .collect::<Vec<_>>(),
+            )),
+            Arc::new(StringArray::from(
+                controls
+                    .iter()
+                    .map(|c| c.family.as_ref().map(|f| f.as_str().to_owned()))
+                    .collect::<Vec<_>>(),
+            )),
+            Arc::new(StringArray::from_iter_values(
+                controls.iter().map(|c| format!("{:?}", c.severity)),
+            )),
+            Arc::new(BooleanArray::from(
+                controls
+                    .iter()
+                    .map(|c| c.testing_relevant)
+                    .collect::<Vec<_>>(),
+            )),
+            Arc::new(StringArray::from(
+                controls
+                    .iter()
+                    .map(|c| c.parent_id.as_ref().map(|p| p.as_str().to_owned()))
+                    .collect::<Vec<_>>(),
+            )),
         ],
     )
 }
@@ -134,23 +207,44 @@ pub fn controls_to_record_batch(
 /// # Errors
 ///
 /// Returns an Arrow error if batch construction fails.
-pub fn evidence_to_record_batch(
-    evidence: &[Evidence],
-) -> arrow::error::Result<RecordBatch> {
+pub fn evidence_to_record_batch(evidence: &[Evidence]) -> arrow::error::Result<RecordBatch> {
     let schema = Arc::new(evidence_schema());
     RecordBatch::try_new(
         schema,
         vec![
-            Arc::new(StringArray::from_iter_values(evidence.iter().map(|e| e.evidence_id.to_string()))),
-            Arc::new(StringArray::from_iter_values(evidence.iter().map(|e| e.entity_id.as_str().to_owned()))),
-            Arc::new(StringArray::from_iter_values(evidence.iter().map(|e| e.control_id.as_str().to_owned()))),
-            Arc::new(StringArray::from_iter_values(evidence.iter().map(|e| format!("{:?}", e.evidence_type)))),
-            Arc::new(StringArray::from_iter_values(evidence.iter().map(|e| e.source_system.as_str().to_owned()))),
-            Arc::new(StringArray::from_iter_values(evidence.iter().map(|e| format!("{:?}", e.result)))),
-            Arc::new(Float64Array::from(evidence.iter().map(|e| e.score).collect::<Vec<_>>())),
-            Arc::new(StringArray::from(evidence.iter().map(|e| Some(e.metadata.to_string())).collect::<Vec<_>>())),
-            Arc::new(StringArray::from_iter_values(evidence.iter().map(|e| e.observed_at.to_rfc3339()))),
-            Arc::new(StringArray::from_iter_values(evidence.iter().map(|e| e.expires_at.to_rfc3339()))),
+            Arc::new(StringArray::from_iter_values(
+                evidence.iter().map(|e| e.evidence_id.to_string()),
+            )),
+            Arc::new(StringArray::from_iter_values(
+                evidence.iter().map(|e| e.entity_id.as_str().to_owned()),
+            )),
+            Arc::new(StringArray::from_iter_values(
+                evidence.iter().map(|e| e.control_id.as_str().to_owned()),
+            )),
+            Arc::new(StringArray::from_iter_values(
+                evidence.iter().map(|e| format!("{:?}", e.evidence_type)),
+            )),
+            Arc::new(StringArray::from_iter_values(
+                evidence.iter().map(|e| e.source_system.as_str().to_owned()),
+            )),
+            Arc::new(StringArray::from_iter_values(
+                evidence.iter().map(|e| format!("{:?}", e.result)),
+            )),
+            Arc::new(Float64Array::from(
+                evidence.iter().map(|e| e.score).collect::<Vec<_>>(),
+            )),
+            Arc::new(StringArray::from(
+                evidence
+                    .iter()
+                    .map(|e| Some(e.metadata.to_string()))
+                    .collect::<Vec<_>>(),
+            )),
+            Arc::new(StringArray::from_iter_values(
+                evidence.iter().map(|e| e.observed_at.to_rfc3339()),
+            )),
+            Arc::new(StringArray::from_iter_values(
+                evidence.iter().map(|e| e.expires_at.to_rfc3339()),
+            )),
         ],
     )
 }
@@ -161,20 +255,32 @@ pub fn evidence_to_record_batch(
 ///
 /// Returns an Arrow error if batch construction fails.
 #[allow(clippy::cast_possible_truncation)] // counts are always small
-pub fn scores_to_record_batch(
-    scores: &[ComplianceScore],
-) -> arrow::error::Result<RecordBatch> {
+pub fn scores_to_record_batch(scores: &[ComplianceScore]) -> arrow::error::Result<RecordBatch> {
     let schema = Arc::new(scores_schema());
     RecordBatch::try_new(
         schema,
         vec![
-            Arc::new(StringArray::from_iter_values(scores.iter().map(|s| s.framework_id.as_str()))),
-            Arc::new(Float64Array::from_iter_values(scores.iter().map(|s| s.score))),
-            Arc::new(UInt64Array::from_iter_values(scores.iter().map(|s| s.controls_total as u64))),
-            Arc::new(UInt64Array::from_iter_values(scores.iter().map(|s| s.controls_covered as u64))),
-            Arc::new(UInt64Array::from_iter_values(scores.iter().map(|s| s.controls_passing as u64))),
-            Arc::new(UInt64Array::from_iter_values(scores.iter().map(|s| s.controls_stale as u64))),
-            Arc::new(StringArray::from_iter_values(scores.iter().map(|s| format!("{:?}", s.badge)))),
+            Arc::new(StringArray::from_iter_values(
+                scores.iter().map(|s| s.framework_id.as_str()),
+            )),
+            Arc::new(Float64Array::from_iter_values(
+                scores.iter().map(|s| s.score),
+            )),
+            Arc::new(UInt64Array::from_iter_values(
+                scores.iter().map(|s| s.controls_total as u64),
+            )),
+            Arc::new(UInt64Array::from_iter_values(
+                scores.iter().map(|s| s.controls_covered as u64),
+            )),
+            Arc::new(UInt64Array::from_iter_values(
+                scores.iter().map(|s| s.controls_passing as u64),
+            )),
+            Arc::new(UInt64Array::from_iter_values(
+                scores.iter().map(|s| s.controls_stale as u64),
+            )),
+            Arc::new(StringArray::from_iter_values(
+                scores.iter().map(|s| format!("{:?}", s.badge)),
+            )),
         ],
     )
 }
@@ -182,6 +288,7 @@ pub fn scores_to_record_batch(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use chrono::Utc;
     use comp_lake_core::models::control::{ControlFamily, ControlId, Severity};
     use comp_lake_core::models::evidence::{
         EvidenceId, EvidenceResult, EvidenceType, SourceSystem,
@@ -189,7 +296,6 @@ mod tests {
     use comp_lake_core::models::framework::{FrameworkId, HarvestSource, Region};
     use comp_lake_core::models::freshness::compute_expires_at;
     use comp_lake_core::models::org::EntityId;
-    use chrono::Utc;
 
     #[test]
     fn frameworks_batch_valid() {
@@ -243,10 +349,7 @@ mod tests {
 
     #[test]
     fn scores_batch_valid() {
-        let score = ComplianceScore::new(
-            FrameworkId::new("DORA").unwrap(),
-            10, 8, 7, 1,
-        );
+        let score = ComplianceScore::new(FrameworkId::new("DORA").unwrap(), 10, 8, 7, 1);
         let batch = scores_to_record_batch(&[score]).unwrap();
         assert_eq!(batch.num_rows(), 1);
         assert_eq!(batch.num_columns(), 7);

@@ -36,12 +36,8 @@ pub fn enhance_with_mappings(
     }
 
     // Build set of controls that already have direct fresh evidence
-    let controls_with_direct: HashSet<&ControlId> = build_direct_coverage(
-        entity_id,
-        &relevant_controls,
-        all_evidence,
-        now,
-    );
+    let controls_with_direct: HashSet<&ControlId> =
+        build_direct_coverage(entity_id, &relevant_controls, all_evidence, now);
 
     // Build map: control_id -> set of mapped source control_ids (confidence >= Medium)
     let mapping_index = build_mapping_index(framework_id, mappings);
@@ -58,7 +54,10 @@ pub fn enhance_with_mappings(
         }
 
         if let Some(mapped_sources) = mapping_index.get(&ctrl.control_id) {
-            if mapped_sources.iter().any(|src| passing_controls.contains(src)) {
+            if mapped_sources
+                .iter()
+                .any(|src| passing_controls.contains(src))
+            {
                 controls_passing += 1;
                 controls_covered += 1;
             }
@@ -81,10 +80,8 @@ fn build_direct_coverage<'a>(
     evidence: &[Evidence],
     now: DateTime<Utc>,
 ) -> HashSet<&'a ControlId> {
-    let relevant_ids: HashSet<&ControlId> = relevant_controls
-        .iter()
-        .map(|c| &c.control_id)
-        .collect();
+    let relevant_ids: HashSet<&ControlId> =
+        relevant_controls.iter().map(|c| &c.control_id).collect();
 
     evidence
         .iter()
@@ -133,9 +130,7 @@ fn build_passing_controls<'a>(
     evidence
         .iter()
         .filter(|ev| {
-            ev.entity_id == *entity_id
-                && ev.expires_at > now
-                && ev.result == EvidenceResult::Pass
+            ev.entity_id == *entity_id && ev.expires_at > now && ev.result == EvidenceResult::Pass
         })
         .map(|ev| &ev.control_id)
         .collect()
@@ -189,11 +184,7 @@ mod tests {
         }
     }
 
-    fn make_mapping(
-        source: &str,
-        target: &str,
-        confidence: Confidence,
-    ) -> ControlMapping {
+    fn make_mapping(source: &str, target: &str, confidence: Confidence) -> ControlMapping {
         ControlMapping::new(
             ctrl_id(source),
             ctrl_id(target),
@@ -220,15 +211,13 @@ mod tests {
         ];
         let mappings = vec![make_mapping("N1", "C2", Confidence::High)];
 
-        let direct = compute_entity_framework_score(
-            &entity(), &fw("DORA"), &controls, &evidence, now,
-        );
+        let direct =
+            compute_entity_framework_score(&entity(), &fw("DORA"), &controls, &evidence, now);
         assert_eq!(direct.controls_passing, 1);
         assert!((direct.score - 50.0).abs() < f64::EPSILON);
 
-        let enhanced = enhance_with_mappings(
-            &direct, &entity(), &controls, &mappings, &evidence, now,
-        );
+        let enhanced =
+            enhance_with_mappings(&direct, &entity(), &controls, &mappings, &evidence, now);
         assert_eq!(enhanced.controls_passing, 2);
         assert!((enhanced.score - 100.0).abs() < f64::EPSILON);
     }
@@ -236,10 +225,7 @@ mod tests {
     #[test]
     fn direct_failing_overrides_mapped_passing() {
         let now = Utc::now();
-        let controls = vec![
-            make_control("C1", "DORA"),
-            make_control("N1", "NIST"),
-        ];
+        let controls = vec![make_control("C1", "DORA"), make_control("N1", "NIST")];
         // C1 has direct FAILING evidence. N1 passes and maps to C1.
         let evidence = vec![
             make_evidence("C1", EvidenceResult::Fail, now),
@@ -247,14 +233,12 @@ mod tests {
         ];
         let mappings = vec![make_mapping("N1", "C1", Confidence::High)];
 
-        let direct = compute_entity_framework_score(
-            &entity(), &fw("DORA"), &controls, &evidence, now,
-        );
+        let direct =
+            compute_entity_framework_score(&entity(), &fw("DORA"), &controls, &evidence, now);
         assert_eq!(direct.controls_passing, 0);
 
-        let enhanced = enhance_with_mappings(
-            &direct, &entity(), &controls, &mappings, &evidence, now,
-        );
+        let enhanced =
+            enhance_with_mappings(&direct, &entity(), &controls, &mappings, &evidence, now);
         // Direct evidence exists — mapping should NOT override
         assert_eq!(enhanced.controls_passing, 0);
     }
@@ -262,60 +246,45 @@ mod tests {
     #[test]
     fn low_confidence_mappings_ignored() {
         let now = Utc::now();
-        let controls = vec![
-            make_control("C1", "DORA"),
-            make_control("N1", "NIST"),
-        ];
+        let controls = vec![make_control("C1", "DORA"), make_control("N1", "NIST")];
         let evidence = vec![make_evidence("N1", EvidenceResult::Pass, now)];
         let mappings = vec![make_mapping("N1", "C1", Confidence::Low)];
 
-        let direct = compute_entity_framework_score(
-            &entity(), &fw("DORA"), &controls, &evidence, now,
-        );
-        let enhanced = enhance_with_mappings(
-            &direct, &entity(), &controls, &mappings, &evidence, now,
-        );
+        let direct =
+            compute_entity_framework_score(&entity(), &fw("DORA"), &controls, &evidence, now);
+        let enhanced =
+            enhance_with_mappings(&direct, &entity(), &controls, &mappings, &evidence, now);
         assert_eq!(enhanced.controls_passing, 0);
     }
 
     #[test]
     fn medium_confidence_mappings_accepted() {
         let now = Utc::now();
-        let controls = vec![
-            make_control("C1", "DORA"),
-            make_control("N1", "NIST"),
-        ];
+        let controls = vec![make_control("C1", "DORA"), make_control("N1", "NIST")];
         let evidence = vec![make_evidence("N1", EvidenceResult::Pass, now)];
         let mappings = vec![make_mapping("N1", "C1", Confidence::Medium)];
 
-        let direct = compute_entity_framework_score(
-            &entity(), &fw("DORA"), &controls, &evidence, now,
-        );
-        let enhanced = enhance_with_mappings(
-            &direct, &entity(), &controls, &mappings, &evidence, now,
-        );
+        let direct =
+            compute_entity_framework_score(&entity(), &fw("DORA"), &controls, &evidence, now);
+        let enhanced =
+            enhance_with_mappings(&direct, &entity(), &controls, &mappings, &evidence, now);
         assert_eq!(enhanced.controls_passing, 1);
     }
 
     #[test]
     fn score_capped_at_100() {
         let now = Utc::now();
-        let controls = vec![
-            make_control("C1", "DORA"),
-            make_control("N1", "NIST"),
-        ];
+        let controls = vec![make_control("C1", "DORA"), make_control("N1", "NIST")];
         let evidence = vec![
             make_evidence("C1", EvidenceResult::Pass, now),
             make_evidence("N1", EvidenceResult::Pass, now),
         ];
         let mappings = vec![make_mapping("N1", "C1", Confidence::High)];
 
-        let direct = compute_entity_framework_score(
-            &entity(), &fw("DORA"), &controls, &evidence, now,
-        );
-        let enhanced = enhance_with_mappings(
-            &direct, &entity(), &controls, &mappings, &evidence, now,
-        );
+        let direct =
+            compute_entity_framework_score(&entity(), &fw("DORA"), &controls, &evidence, now);
+        let enhanced =
+            enhance_with_mappings(&direct, &entity(), &controls, &mappings, &evidence, now);
         assert!(enhanced.score <= 100.0);
     }
 }

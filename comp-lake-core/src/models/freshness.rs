@@ -57,15 +57,24 @@ mod tests {
 
     #[test]
     fn freshness_periods() {
-        assert_eq!(freshness_period(&EvidenceType::ChaosExperiment).num_days(), 90);
+        assert_eq!(
+            freshness_period(&EvidenceType::ChaosExperiment).num_days(),
+            90
+        );
         assert_eq!(freshness_period(&EvidenceType::GameDay).num_days(), 180);
         assert_eq!(freshness_period(&EvidenceType::PenTest).num_days(), 365);
         assert_eq!(freshness_period(&EvidenceType::VulnScan).num_days(), 30);
         assert_eq!(freshness_period(&EvidenceType::DoraMetric).num_days(), 30);
         assert_eq!(freshness_period(&EvidenceType::Scorecard).num_days(), 14);
-        assert_eq!(freshness_period(&EvidenceType::AuditFinding).num_days(), 365);
+        assert_eq!(
+            freshness_period(&EvidenceType::AuditFinding).num_days(),
+            365
+        );
         assert_eq!(freshness_period(&EvidenceType::UnitTest).num_days(), 30);
-        assert_eq!(freshness_period(&EvidenceType::IntegrationTest).num_days(), 60);
+        assert_eq!(
+            freshness_period(&EvidenceType::IntegrationTest).num_days(),
+            60
+        );
     }
 
     #[test]
