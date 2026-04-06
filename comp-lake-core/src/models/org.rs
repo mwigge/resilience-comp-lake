@@ -5,9 +5,16 @@ use serde::{Deserialize, Serialize};
 pub struct EntityId(String);
 
 impl EntityId {
+    /// Create a new `EntityId`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `id` is empty. Use `try_new` for fallible construction.
     #[must_use]
     pub fn new(id: impl Into<String>) -> Self {
-        Self(id.into())
+        let id = id.into();
+        assert!(!id.is_empty(), "EntityId must not be empty");
+        Self(id)
     }
 
     #[must_use]

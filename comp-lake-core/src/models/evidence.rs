@@ -77,9 +77,14 @@ impl EvidenceResult {
 pub struct SourceSystem(String);
 
 impl SourceSystem {
+    /// # Panics
+    ///
+    /// Panics if `name` is empty.
     #[must_use]
     pub fn new(name: impl Into<String>) -> Self {
-        Self(name.into())
+        let name = name.into();
+        assert!(!name.is_empty(), "SourceSystem must not be empty");
+        Self(name)
     }
 
     #[must_use]
