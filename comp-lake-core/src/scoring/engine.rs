@@ -43,7 +43,7 @@ pub fn compute_entity_framework_score(
             continue;
         }
 
-        let fresh = ev.expires_at >= now;
+        let fresh = ev.expires_at > now;
         let entry = best_per_control
             .entry(&ev.control_id)
             .or_insert(BestEvidence {
@@ -102,9 +102,27 @@ mod tests {
     use crate::models::framework::FrameworkId;
     use crate::models::freshness::compute_expires_at;
     use crate::scoring::badges::BadgeTier;
+    use chrono::TimeZone;
+
+    /// Tolerance for f64 score comparisons.
+    const SCORE_TOLERANCE: f64 = 1e-10;
+
+    fn assert_score_eq(actual: f64, expected: f64) {
+        assert!(
+            (actual - expected).abs() < SCORE_TOLERANCE,
+            "score mismatch: expected {expected}, got {actual}"
+        );
+    }
+
+    /// Fixed reference time for deterministic tests.
+    fn fixed_now() -> DateTime<Utc> {
+        Utc.with_ymd_and_hms(2026, 4, 12, 12, 0, 0)
+            .single()
+            .expect("valid fixed timestamp")
+    }
 
     fn fw_id() -> FrameworkId {
-        FrameworkId::new("DORA").unwrap()
+        FrameworkId::new("DORA").expect("valid framework ID")
     }
 
     fn entity_id() -> EntityId {
@@ -113,7 +131,7 @@ mod tests {
 
     fn make_control(id: &str, testing_relevant: bool) -> Control {
         Control::builder(
-            ControlId::new(id).unwrap(),
+            ControlId::new(id).expect("valid control ID"),
             fw_id(),
             format!("Control {id}"),
         )
@@ -131,7 +149,7 @@ mod tests {
         Evidence {
             evidence_id: EvidenceId::new(),
             entity_id: entity_id(),
-            control_id: ControlId::new(control_id).unwrap(),
+            control_id: ControlId::new(control_id).expect("valid control ID"),
             evidence_type,
             source_system: SourceSystem::new("tumult"),
             result,
@@ -145,9 +163,9 @@ mod tests {
     #[test]
     fn empty_evidence_scores_zero() {
         let controls = vec![make_control("C1", true), make_control("C2", true)];
-        let now = Utc::now();
+        let now = fixed_now();
         let score = compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &[], now);
-        assert!((score.score - 0.0).abs() < f64::EPSILON);
+        assert_score_eq(score.score, 0.0);
         assert_eq!(score.controls_total, 2);
         assert_eq!(score.controls_covered, 0);
         assert_eq!(score.controls_passing, 0);
@@ -157,7 +175,7 @@ mod tests {
     #[test]
     fn all_passing_scores_100() {
         let controls = vec![make_control("C1", true), make_control("C2", true)];
-        let now = Utc::now();
+        let now = fixed_now();
         let evidence = vec![
             make_evidence(
                 "C1",
@@ -174,7 +192,7 @@ mod tests {
         ];
         let score =
             compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &evidence, now);
-        assert!((score.score - 100.0).abs() < f64::EPSILON);
+        assert_score_eq(score.score, 100.0);
         assert_eq!(score.controls_passing, 2);
         assert_eq!(score.badge, BadgeTier::Platinum);
     }
@@ -182,7 +200,7 @@ mod tests {
     #[test]
     fn stale_evidence_does_not_count() {
         let controls = vec![make_control("C1", true)];
-        let now = Utc::now();
+        let now = fixed_now();
         let old = now - chrono::Duration::days(200);
         let evidence = vec![make_evidence(
             "C1",
@@ -192,7 +210,7 @@ mod tests {
         )];
         let score =
             compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &evidence, now);
-        assert!((score.score - 0.0).abs() < f64::EPSILON);
+        assert_score_eq(score.score, 0.0);
         assert_eq!(score.controls_stale, 1);
         assert_eq!(score.controls_covered, 0);
     }
@@ -200,7 +218,7 @@ mod tests {
     #[test]
     fn partial_counts_as_covered_not_passing() {
         let controls = vec![make_control("C1", true)];
-        let now = Utc::now();
+        let now = fixed_now();
         let evidence = vec![make_evidence(
             "C1",
             EvidenceResult::Partial,
@@ -209,7 +227,7 @@ mod tests {
         )];
         let score =
             compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &evidence, now);
-        assert!((score.score - 0.0).abs() < f64::EPSILON);
+        assert_score_eq(score.score, 0.0);
         assert_eq!(score.controls_covered, 1);
         assert_eq!(score.controls_passing, 0);
     }
@@ -217,7 +235,7 @@ mod tests {
     #[test]
     fn best_fresh_result_wins() {
         let controls = vec![make_control("C1", true)];
-        let now = Utc::now();
+        let now = fixed_now();
         let evidence = vec![
             make_evidence(
                 "C1",
@@ -229,14 +247,14 @@ mod tests {
         ];
         let score =
             compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &evidence, now);
-        assert!((score.score - 100.0).abs() < f64::EPSILON);
+        assert_score_eq(score.score, 100.0);
         assert_eq!(score.controls_passing, 1);
     }
 
     #[test]
     fn non_testing_relevant_controls_excluded() {
         let controls = vec![make_control("C1", true), make_control("C2", false)];
-        let now = Utc::now();
+        let now = fixed_now();
         let evidence = vec![make_evidence(
             "C1",
             EvidenceResult::Pass,
@@ -246,7 +264,7 @@ mod tests {
         let score =
             compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &evidence, now);
         assert_eq!(score.controls_total, 1);
-        assert!((score.score - 100.0).abs() < f64::EPSILON);
+        assert_score_eq(score.score, 100.0);
     }
 
     #[test]
@@ -257,7 +275,7 @@ mod tests {
             make_control("C3", true),
             make_control("C4", true),
         ];
-        let now = Utc::now();
+        let now = fixed_now();
         let evidence = vec![
             make_evidence(
                 "C1",
@@ -281,7 +299,7 @@ mod tests {
         ];
         let score =
             compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &evidence, now);
-        assert!((score.score - 50.0).abs() < f64::EPSILON);
+        assert_score_eq(score.score, 50.0);
         assert_eq!(score.controls_total, 4);
         assert_eq!(score.controls_covered, 3);
         assert_eq!(score.controls_passing, 2);
@@ -290,9 +308,242 @@ mod tests {
 
     #[test]
     fn no_controls_scores_zero() {
-        let now = Utc::now();
+        let now = fixed_now();
         let score = compute_entity_framework_score(&entity_id(), &fw_id(), &[], &[], now);
-        assert!((score.score - 0.0).abs() < f64::EPSILON);
+        assert_score_eq(score.score, 0.0);
         assert_eq!(score.controls_total, 0);
+    }
+
+    #[test]
+    fn score_capped_at_100() {
+        // Even if controls_passing somehow exceeds controls_total via ComplianceScore::new,
+        // the score is capped. Here we verify engine itself never exceeds 100.
+        let controls = vec![make_control("C1", true)];
+        let now = fixed_now();
+        let evidence = vec![
+            make_evidence(
+                "C1",
+                EvidenceResult::Pass,
+                now,
+                EvidenceType::ChaosExperiment,
+            ),
+            make_evidence("C1", EvidenceResult::Pass, now, EvidenceType::GameDay),
+        ];
+        let score =
+            compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &evidence, now);
+        assert!(score.score <= 100.0);
+        assert_score_eq(score.score, 100.0);
+    }
+
+    #[test]
+    fn badge_bronze_boundary_at_50() {
+        // 2 out of 4 passing = 50.0 => Bronze
+        let controls = vec![
+            make_control("C1", true),
+            make_control("C2", true),
+            make_control("C3", true),
+            make_control("C4", true),
+        ];
+        let now = fixed_now();
+        let evidence = vec![
+            make_evidence(
+                "C1",
+                EvidenceResult::Pass,
+                now,
+                EvidenceType::ChaosExperiment,
+            ),
+            make_evidence(
+                "C2",
+                EvidenceResult::Pass,
+                now,
+                EvidenceType::ChaosExperiment,
+            ),
+        ];
+        let score =
+            compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &evidence, now);
+        assert_score_eq(score.score, 50.0);
+        assert_eq!(score.badge, BadgeTier::Bronze);
+    }
+
+    #[test]
+    fn badge_silver_boundary_at_70() {
+        // 7 out of 10 passing = 70.0 => Silver
+        let controls: Vec<Control> = (0..10)
+            .map(|i| make_control(&format!("C{i}"), true))
+            .collect();
+        let now = fixed_now();
+        let evidence: Vec<Evidence> = (0..7)
+            .map(|i| {
+                make_evidence(
+                    &format!("C{i}"),
+                    EvidenceResult::Pass,
+                    now,
+                    EvidenceType::ChaosExperiment,
+                )
+            })
+            .collect();
+        let score =
+            compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &evidence, now);
+        assert_score_eq(score.score, 70.0);
+        assert_eq!(score.badge, BadgeTier::Silver);
+    }
+
+    #[test]
+    fn badge_gold_boundary_at_85() {
+        // 17 out of 20 passing = 85.0 => Gold
+        let controls: Vec<Control> = (0..20)
+            .map(|i| make_control(&format!("C{i}"), true))
+            .collect();
+        let now = fixed_now();
+        let evidence: Vec<Evidence> = (0..17)
+            .map(|i| {
+                make_evidence(
+                    &format!("C{i}"),
+                    EvidenceResult::Pass,
+                    now,
+                    EvidenceType::ChaosExperiment,
+                )
+            })
+            .collect();
+        let score =
+            compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &evidence, now);
+        assert_score_eq(score.score, 85.0);
+        assert_eq!(score.badge, BadgeTier::Gold);
+    }
+
+    #[test]
+    fn badge_platinum_boundary_at_95() {
+        // 19 out of 20 passing = 95.0 => Platinum
+        let controls: Vec<Control> = (0..20)
+            .map(|i| make_control(&format!("C{i}"), true))
+            .collect();
+        let now = fixed_now();
+        let evidence: Vec<Evidence> = (0..19)
+            .map(|i| {
+                make_evidence(
+                    &format!("C{i}"),
+                    EvidenceResult::Pass,
+                    now,
+                    EvidenceType::ChaosExperiment,
+                )
+            })
+            .collect();
+        let score =
+            compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &evidence, now);
+        assert_score_eq(score.score, 95.0);
+        assert_eq!(score.badge, BadgeTier::Platinum);
+    }
+
+    #[test]
+    fn badge_none_below_50() {
+        // 9 out of 20 passing = 45.0 => None
+        let controls: Vec<Control> = (0..20)
+            .map(|i| make_control(&format!("C{i}"), true))
+            .collect();
+        let now = fixed_now();
+        let evidence: Vec<Evidence> = (0..9)
+            .map(|i| {
+                make_evidence(
+                    &format!("C{i}"),
+                    EvidenceResult::Pass,
+                    now,
+                    EvidenceType::ChaosExperiment,
+                )
+            })
+            .collect();
+        let score =
+            compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &evidence, now);
+        assert_score_eq(score.score, 45.0);
+        assert_eq!(score.badge, BadgeTier::None);
+    }
+
+    #[test]
+    fn deterministic_fixed_timestamps() {
+        let now = Utc
+            .with_ymd_and_hms(2026, 4, 12, 0, 0, 0)
+            .single()
+            .expect("valid fixed timestamp");
+        let controls = vec![make_control("C1", true)];
+        let evidence = vec![make_evidence(
+            "C1",
+            EvidenceResult::Pass,
+            now,
+            EvidenceType::ChaosExperiment,
+        )];
+        let score =
+            compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &evidence, now);
+        assert_score_eq(score.score, 100.0);
+        assert_eq!(score.badge, BadgeTier::Platinum);
+    }
+
+    #[test]
+    fn evidence_for_different_entity_ignored() {
+        let controls = vec![make_control("C1", true)];
+        let now = fixed_now();
+        let other_entity = EntityId::new("team-beta");
+        let et = EvidenceType::ChaosExperiment;
+        let evidence = vec![Evidence {
+            evidence_id: EvidenceId::new(),
+            entity_id: other_entity,
+            control_id: ControlId::new("C1").expect("valid control ID"),
+            evidence_type: et,
+            source_system: SourceSystem::new("tumult"),
+            result: EvidenceResult::Pass,
+            score: None,
+            metadata: serde_json::Value::Null,
+            observed_at: now,
+            expires_at: compute_expires_at(now, &et),
+        }];
+        let score =
+            compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &evidence, now);
+        assert_score_eq(score.score, 0.0);
+        assert_eq!(score.controls_covered, 0);
+    }
+
+    #[test]
+    fn multi_evidence_stale_plus_fresh_uses_fresh() {
+        let controls = vec![make_control("C1", true)];
+        let now = fixed_now();
+        let old = now - chrono::Duration::days(200);
+        let evidence = vec![
+            // Stale: observed 200 days ago, ChaosExperiment has 90-day window
+            make_evidence(
+                "C1",
+                EvidenceResult::Pass,
+                old,
+                EvidenceType::ChaosExperiment,
+            ),
+            // Fresh: observed now
+            make_evidence(
+                "C1",
+                EvidenceResult::Fail,
+                now,
+                EvidenceType::ChaosExperiment,
+            ),
+        ];
+        let score =
+            compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &evidence, now);
+        // Fresh Fail wins over stale Pass
+        assert_eq!(score.controls_covered, 1);
+        assert_eq!(score.controls_passing, 0);
+        assert_eq!(score.controls_stale, 0);
+    }
+
+    #[test]
+    fn single_control_single_evidence_scores_100() {
+        let controls = vec![make_control("C1", true)];
+        let now = fixed_now();
+        let evidence = vec![make_evidence(
+            "C1",
+            EvidenceResult::Pass,
+            now,
+            EvidenceType::ChaosExperiment,
+        )];
+        let score =
+            compute_entity_framework_score(&entity_id(), &fw_id(), &controls, &evidence, now);
+        assert_score_eq(score.score, 100.0);
+        assert_eq!(score.controls_total, 1);
+        assert_eq!(score.controls_covered, 1);
+        assert_eq!(score.controls_passing, 1);
     }
 }

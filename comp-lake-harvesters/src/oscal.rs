@@ -4,15 +4,14 @@ use serde::Deserialize;
 use comp_lake_core::models::control::{Control, ControlFamily, ControlId, Severity};
 use comp_lake_core::models::framework::{Framework, FrameworkId, HarvestSource, Region};
 
-use crate::harvester::{
-    HarvestCadence, HarvestConfig, HarvestError, HarvestResult, Harvester,
-};
+use crate::harvester::{HarvestCadence, HarvestConfig, HarvestError, HarvestResult, Harvester};
 
 const OSCAL_800_53_URL: &str = "https://raw.githubusercontent.com/usnistgov/oscal-content/main/nist.gov/SP800-53/rev5/json/NIST_SP-800-53_rev5_catalog.json";
 
 /// Harvester for NIST frameworks via OSCAL JSON catalogs on GitHub.
 pub struct OscalHarvester {
     framework_ids: Vec<FrameworkId>,
+    base_url: &'static str,
 }
 
 impl OscalHarvester {
@@ -22,7 +21,19 @@ impl OscalHarvester {
             .iter()
             .filter_map(|id| FrameworkId::new(*id).ok())
             .collect();
-        Self { framework_ids }
+        Self {
+            framework_ids,
+            base_url: OSCAL_800_53_URL,
+        }
+    }
+
+    /// Create a harvester with a custom base URL (for testing with mock servers).
+    #[must_use]
+    // Available for integration testing
+    pub fn with_base_url(base_url: &'static str) -> Self {
+        let mut h = Self::new();
+        h.base_url = base_url;
+        h
     }
 }
 
@@ -51,14 +62,14 @@ impl Harvester for OscalHarvester {
     ) -> std::pin::Pin<
         Box<dyn std::future::Future<Output = Result<HarvestResult, HarvestError>> + Send + 'a>,
     > {
-        Box::pin(harvest_oscal(config))
+        Box::pin(harvest_oscal(config, self.base_url))
     }
 }
 
-async fn harvest_oscal(config: &HarvestConfig) -> Result<HarvestResult, HarvestError> {
+async fn harvest_oscal(config: &HarvestConfig, url: &str) -> Result<HarvestResult, HarvestError> {
     let response = config
         .http_client
-        .get(OSCAL_800_53_URL)
+        .get(url)
         .timeout(config.timeout)
         .send()
         .await?;
@@ -105,9 +116,7 @@ pub(crate) fn parse_catalog(catalog: &OscalCatalog) -> Result<HarvestResult, Har
             // Parse enhancements (sub-controls)
             if let Some(ref enhancements) = ctrl.controls {
                 for enh in enhancements {
-                    if let Some(c) =
-                        parse_control(&framework_id, family, enh, Some(&ctrl.id))
-                    {
+                    if let Some(c) = parse_control(&framework_id, family, enh, Some(&ctrl.id)) {
                         controls.push(c);
                     }
                 }
@@ -187,8 +196,7 @@ fn is_testing_relevant(ctrl: &OscalControl) -> bool {
                     if sub.name == "assessment-method" || sub.name == "assessment-objective" {
                         if let Some(ref props) = sub.props {
                             for prop in props {
-                                if prop.name == "method"
-                                    && prop.value.eq_ignore_ascii_case("TEST")
+                                if prop.name == "method" && prop.value.eq_ignore_ascii_case("TEST")
                                 {
                                     return true;
                                 }
@@ -416,7 +424,11 @@ mod tests {
     #[test]
     fn control_ids_uppercase() {
         let result = parse_mock();
-        let ids: Vec<_> = result.controls.iter().map(|c| c.control_id.as_str().to_owned()).collect();
+        let ids: Vec<_> = result
+            .controls
+            .iter()
+            .map(|c| c.control_id.as_str().to_owned())
+            .collect();
         assert!(ids.contains(&"AC-1".to_owned()));
         assert!(ids.contains(&"AC-2".to_owned()));
         assert!(ids.contains(&"AC-2.1".to_owned()));
@@ -439,15 +451,27 @@ mod tests {
         let result = parse_mock();
 
         // AC-2 has TEST assessment method
-        let ac2 = result.controls.iter().find(|c| c.control_id.as_str() == "AC-2").unwrap();
+        let ac2 = result
+            .controls
+            .iter()
+            .find(|c| c.control_id.as_str() == "AC-2")
+            .unwrap();
         assert!(ac2.testing_relevant);
 
         // CP-4 has TEST assessment method
-        let cp4 = result.controls.iter().find(|c| c.control_id.as_str() == "CP-4").unwrap();
+        let cp4 = result
+            .controls
+            .iter()
+            .find(|c| c.control_id.as_str() == "CP-4")
+            .unwrap();
         assert!(cp4.testing_relevant);
 
         // PM-1 has only EXAMINE — but pm is not in the testing-relevant family list
-        let pm1 = result.controls.iter().find(|c| c.control_id.as_str() == "PM-1").unwrap();
+        let pm1 = result
+            .controls
+            .iter()
+            .find(|c| c.control_id.as_str() == "PM-1")
+            .unwrap();
         assert!(!pm1.testing_relevant);
     }
 
@@ -455,13 +479,25 @@ mod tests {
     fn severity_from_baseline_impact() {
         let result = parse_mock();
 
-        let ac1 = result.controls.iter().find(|c| c.control_id.as_str() == "AC-1").unwrap();
+        let ac1 = result
+            .controls
+            .iter()
+            .find(|c| c.control_id.as_str() == "AC-1")
+            .unwrap();
         assert_eq!(ac1.severity, Severity::Low);
 
-        let ac2 = result.controls.iter().find(|c| c.control_id.as_str() == "AC-2").unwrap();
+        let ac2 = result
+            .controls
+            .iter()
+            .find(|c| c.control_id.as_str() == "AC-2")
+            .unwrap();
         assert_eq!(ac2.severity, Severity::High);
 
-        let cp4 = result.controls.iter().find(|c| c.control_id.as_str() == "CP-4").unwrap();
+        let cp4 = result
+            .controls
+            .iter()
+            .find(|c| c.control_id.as_str() == "CP-4")
+            .unwrap();
         assert_eq!(cp4.severity, Severity::Moderate);
     }
 
@@ -469,17 +505,32 @@ mod tests {
     fn family_from_group_title() {
         let result = parse_mock();
 
-        let ac2 = result.controls.iter().find(|c| c.control_id.as_str() == "AC-2").unwrap();
+        let ac2 = result
+            .controls
+            .iter()
+            .find(|c| c.control_id.as_str() == "AC-2")
+            .unwrap();
         assert_eq!(ac2.family.as_ref().unwrap().as_str(), "Access Control");
 
-        let cp4 = result.controls.iter().find(|c| c.control_id.as_str() == "CP-4").unwrap();
-        assert_eq!(cp4.family.as_ref().unwrap().as_str(), "Contingency Planning");
+        let cp4 = result
+            .controls
+            .iter()
+            .find(|c| c.control_id.as_str() == "CP-4")
+            .unwrap();
+        assert_eq!(
+            cp4.family.as_ref().unwrap().as_str(),
+            "Contingency Planning"
+        );
     }
 
     #[test]
     fn description_from_statement_prose() {
         let result = parse_mock();
-        let ac2 = result.controls.iter().find(|c| c.control_id.as_str() == "AC-2").unwrap();
+        let ac2 = result
+            .controls
+            .iter()
+            .find(|c| c.control_id.as_str() == "AC-2")
+            .unwrap();
         assert!(ac2.description.contains("Manage system accounts"));
     }
 

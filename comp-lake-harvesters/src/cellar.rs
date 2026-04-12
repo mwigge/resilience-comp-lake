@@ -4,9 +4,7 @@ use serde::Deserialize;
 use comp_lake_core::models::control::{Control, ControlFamily, ControlId, Severity};
 use comp_lake_core::models::framework::{Framework, FrameworkId, HarvestSource, Region};
 
-use crate::harvester::{
-    HarvestCadence, HarvestConfig, HarvestError, HarvestResult, Harvester,
-};
+use crate::harvester::{HarvestCadence, HarvestConfig, HarvestError, HarvestResult, Harvester};
 
 const SPARQL_ENDPOINT: &str = "https://publications.europa.eu/webapi/rdf/sparql";
 
@@ -48,6 +46,7 @@ const EU_FRAMEWORKS: &[EuFramework] = &[
 /// Harvester for EU legislation via EUR-Lex CELLAR SPARQL endpoint.
 pub struct CellarHarvester {
     framework_ids: Vec<FrameworkId>,
+    base_url: &'static str,
 }
 
 impl CellarHarvester {
@@ -57,7 +56,19 @@ impl CellarHarvester {
             .iter()
             .filter_map(|f| FrameworkId::new(f.id).ok())
             .collect();
-        Self { framework_ids }
+        Self {
+            framework_ids,
+            base_url: SPARQL_ENDPOINT,
+        }
+    }
+
+    /// Create a harvester with a custom base URL (for testing with mock servers).
+    #[must_use]
+    // Available for integration testing
+    pub fn with_base_url(base_url: &'static str) -> Self {
+        let mut h = Self::new();
+        h.base_url = base_url;
+        h
     }
 }
 
@@ -86,18 +97,24 @@ impl Harvester for CellarHarvester {
     ) -> std::pin::Pin<
         Box<dyn std::future::Future<Output = Result<HarvestResult, HarvestError>> + Send + 'a>,
     > {
-        Box::pin(harvest_cellar(config))
+        Box::pin(harvest_cellar(config, self.base_url))
     }
 }
 
-async fn harvest_cellar(config: &HarvestConfig) -> Result<HarvestResult, HarvestError> {
+async fn harvest_cellar(
+    config: &HarvestConfig,
+    endpoint: &str,
+) -> Result<HarvestResult, HarvestError> {
     let eu_fw = &EU_FRAMEWORKS[0]; // DORA as primary
     let query = build_sparql_query(eu_fw.celex);
 
     let response = config
         .http_client
-        .get(SPARQL_ENDPOINT)
-        .query(&[("query", &query), ("format", &"application/json".to_owned())])
+        .get(endpoint)
+        .query(&[
+            ("query", &query),
+            ("format", &"application/json".to_owned()),
+        ])
         .timeout(config.timeout)
         .send()
         .await?;
@@ -114,7 +131,8 @@ async fn harvest_cellar(config: &HarvestConfig) -> Result<HarvestResult, Harvest
         .await
         .map_err(|e| HarvestError::Parse(e.to_string()))?;
 
-    let framework_id = FrameworkId::new(eu_fw.id).map_err(|e| HarvestError::Parse(e.to_string()))?;
+    let framework_id =
+        FrameworkId::new(eu_fw.id).map_err(|e| HarvestError::Parse(e.to_string()))?;
 
     let framework = Framework::builder(framework_id.clone(), eu_fw.name)
         .version(eu_fw.version)
@@ -205,9 +223,24 @@ fn is_testing_relevant(framework: &str, article_num: &str) -> bool {
     match framework {
         "DORA" => matches!(
             article_num,
-            "24" | "25" | "26" | "27" | "28" | "29" | "30"
-                | "9" | "10" | "11" | "12" | "13" | "14" | "15" | "16" | "17"
-                | "19" | "20" | "21"
+            "24" | "25"
+                | "26"
+                | "27"
+                | "28"
+                | "29"
+                | "30"
+                | "9"
+                | "10"
+                | "11"
+                | "12"
+                | "13"
+                | "14"
+                | "15"
+                | "16"
+                | "17"
+                | "19"
+                | "20"
+                | "21"
         ),
         "NIS2" => matches!(article_num, "21" | "23" | "24" | "25" | "26" | "29" | "32"),
         "CRA" => matches!(

@@ -3,9 +3,7 @@ use serde::Deserialize;
 
 use comp_lake_core::models::framework::FrameworkId;
 
-use crate::harvester::{
-    HarvestCadence, HarvestConfig, HarvestError, HarvestResult, Harvester,
-};
+use crate::harvester::{HarvestCadence, HarvestConfig, HarvestError, HarvestResult, Harvester};
 
 const NVD_API_URL: &str = "https://services.nvd.nist.gov/rest/json/cves/2.0";
 const PAGE_SIZE: u32 = 2000;
@@ -13,6 +11,7 @@ const PAGE_SIZE: u32 = 2000;
 /// Harvester for NIST NVD CVE data.
 pub struct NvdHarvester {
     framework_ids: Vec<FrameworkId>,
+    base_url: &'static str,
 }
 
 impl NvdHarvester {
@@ -23,7 +22,17 @@ impl NvdHarvester {
     pub fn new() -> Self {
         Self {
             framework_ids: vec![FrameworkId::new("NVD").expect("valid framework ID")],
+            base_url: NVD_API_URL,
         }
+    }
+
+    /// Create a harvester with a custom base URL (for testing with mock servers).
+    #[must_use]
+    // Available for integration testing
+    pub fn with_base_url(base_url: &'static str) -> Self {
+        let mut h = Self::new();
+        h.base_url = base_url;
+        h
     }
 }
 
@@ -52,7 +61,7 @@ impl Harvester for NvdHarvester {
     ) -> std::pin::Pin<
         Box<dyn std::future::Future<Output = Result<HarvestResult, HarvestError>> + Send + 'a>,
     > {
-        Box::pin(harvest_nvd(config, None))
+        Box::pin(harvest_nvd(config, None, self.base_url))
     }
 }
 
@@ -60,12 +69,13 @@ impl Harvester for NvdHarvester {
 async fn harvest_nvd(
     config: &HarvestConfig,
     last_modified: Option<DateTime<Utc>>,
+    base_url: &str,
 ) -> Result<HarvestResult, HarvestError> {
     let mut all_cves = Vec::new();
     let mut start_index: u32 = 0;
 
     loop {
-        let page = fetch_page(config, start_index, last_modified).await?;
+        let page = fetch_page(config, start_index, last_modified, base_url).await?;
         let total = page.total_results;
         all_cves.extend(page.vulnerabilities);
 
@@ -77,8 +87,7 @@ async fn harvest_nvd(
         start_index += PAGE_SIZE;
     }
 
-    let framework_id = FrameworkId::new("NVD")
-        .map_err(|e| HarvestError::Parse(e.to_string()))?;
+    let framework_id = FrameworkId::new("NVD").map_err(|e| HarvestError::Parse(e.to_string()))?;
     let framework = comp_lake_core::models::framework::Framework::builder(
         framework_id,
         "NIST National Vulnerability Database",
@@ -94,7 +103,11 @@ async fn harvest_nvd(
         framework,
         controls: Vec::new(), // NVD produces evidence, not controls
         mappings: Vec::new(),
-        snapshot_version: format!("nvd-{}-cves-{}", Utc::now().format("%Y%m%d"), all_cves.len()),
+        snapshot_version: format!(
+            "nvd-{}-cves-{}",
+            Utc::now().format("%Y%m%d"),
+            all_cves.len()
+        ),
         harvested_at: Utc::now(),
     })
 }
@@ -103,10 +116,11 @@ async fn fetch_page(
     config: &HarvestConfig,
     start_index: u32,
     last_modified: Option<DateTime<Utc>>,
+    url: &str,
 ) -> Result<NvdResponse, HarvestError> {
     let mut request = config
         .http_client
-        .get(NVD_API_URL)
+        .get(url)
         .query(&[
             ("resultsPerPage", PAGE_SIZE.to_string()),
             ("startIndex", start_index.to_string()),
@@ -116,10 +130,7 @@ async fn fetch_page(
     if let Some(since) = last_modified {
         let since_str = since.format("%Y-%m-%dT%H:%M:%S.000").to_string();
         let now_str = Utc::now().format("%Y-%m-%dT%H:%M:%S.000").to_string();
-        request = request.query(&[
-            ("lastModStartDate", since_str),
-            ("lastModEndDate", now_str),
-        ]);
+        request = request.query(&[("lastModStartDate", since_str), ("lastModEndDate", now_str)]);
     }
 
     if let Some(ref api_key) = config.api_keys.nvd_api_key {
@@ -306,11 +317,7 @@ mod tests {
     fn cvss_scores_extracted() {
         let response = parse_nvd_response(MOCK_NVD_RESPONSE).unwrap();
         let cve1 = &response.vulnerabilities[0].cve;
-        let score = cve1
-            .metrics
-            .as_ref()
-            .unwrap()
-            .cvss_metric_v31[0]
+        let score = cve1.metrics.as_ref().unwrap().cvss_metric_v31[0]
             .cvss_data
             .base_score;
         assert!((score - 9.8).abs() < f64::EPSILON);
@@ -326,7 +333,8 @@ mod tests {
 
     #[test]
     fn empty_response_parses() {
-        let json = r#"{"resultsPerPage": 0, "startIndex": 0, "totalResults": 0, "vulnerabilities": []}"#;
+        let json =
+            r#"{"resultsPerPage": 0, "startIndex": 0, "totalResults": 0, "vulnerabilities": []}"#;
         let response = parse_nvd_response(json).unwrap();
         assert_eq!(response.total_results, 0);
         assert!(response.vulnerabilities.is_empty());

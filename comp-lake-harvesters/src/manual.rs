@@ -87,9 +87,7 @@ impl Harvester for ManualLoader {
         &'a self,
         _config: &'a crate::harvester::HarvestConfig,
     ) -> std::pin::Pin<
-        Box<
-            dyn std::future::Future<Output = Result<HarvestResult, HarvestError>> + Send + 'a,
-        >,
+        Box<dyn std::future::Future<Output = Result<HarvestResult, HarvestError>> + Send + 'a>,
     > {
         Box::pin(async move {
             if self.seed_paths.is_empty() {
@@ -120,8 +118,8 @@ pub fn load_seed_toml(toml_str: &str) -> Result<HarvestResult, HarvestError> {
     let seed: SeedFile =
         toml::from_str(toml_str).map_err(|e| HarvestError::Parse(e.to_string()))?;
 
-    let framework_id = FrameworkId::new(&seed.framework.id)
-        .map_err(|e| HarvestError::Parse(e.to_string()))?;
+    let framework_id =
+        FrameworkId::new(&seed.framework.id).map_err(|e| HarvestError::Parse(e.to_string()))?;
 
     let region = match seed.framework.region.to_lowercase().as_str() {
         "eu" => Region::Eu,
@@ -148,11 +146,10 @@ pub fn load_seed_toml(toml_str: &str) -> Result<HarvestResult, HarvestError> {
                 _ => Severity::Moderate,
             };
 
-            let mut builder =
-                Control::builder(control_id, framework_id.clone(), &sc.title)
-                    .severity(severity)
-                    .testing_relevant(sc.testing_relevant)
-                    .description(&sc.description);
+            let mut builder = Control::builder(control_id, framework_id.clone(), &sc.title)
+                .severity(severity)
+                .testing_relevant(sc.testing_relevant)
+                .description(&sc.description);
 
             if !sc.family.is_empty() {
                 builder = builder.family(ControlFamily::new(&sc.family));
@@ -259,7 +256,11 @@ testing_relevant = true
     #[test]
     fn pci_testing_relevant_count() {
         let result = load_seed_toml(PCI_SEED).unwrap();
-        let relevant: Vec<_> = result.controls.iter().filter(|c| c.testing_relevant).collect();
+        let relevant: Vec<_> = result
+            .controls
+            .iter()
+            .filter(|c| c.testing_relevant)
+            .collect();
         assert_eq!(relevant.len(), 3);
     }
 
@@ -273,17 +274,29 @@ testing_relevant = true
     #[test]
     fn severity_mapping() {
         let result = load_seed_toml(PCI_SEED).unwrap();
-        let high = result.controls.iter().find(|c| c.control_id.as_str() == "PCI-1.1.1").unwrap();
+        let high = result
+            .controls
+            .iter()
+            .find(|c| c.control_id.as_str() == "PCI-1.1.1")
+            .unwrap();
         assert_eq!(high.severity, Severity::High);
 
-        let low = result.controls.iter().find(|c| c.control_id.as_str() == "PCI-1.1.0").unwrap();
+        let low = result
+            .controls
+            .iter()
+            .find(|c| c.control_id.as_str() == "PCI-1.1.0")
+            .unwrap();
         assert_eq!(low.severity, Severity::Low);
     }
 
     #[test]
     fn family_assignment() {
         let result = load_seed_toml(PCI_SEED).unwrap();
-        let ctrl = result.controls.iter().find(|c| c.control_id.as_str() == "PCI-6.2.4").unwrap();
+        let ctrl = result
+            .controls
+            .iter()
+            .find(|c| c.control_id.as_str() == "PCI-6.2.4")
+            .unwrap();
         assert_eq!(ctrl.family.as_ref().unwrap().as_str(), "Secure Development");
     }
 

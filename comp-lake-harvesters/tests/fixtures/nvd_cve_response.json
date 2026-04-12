@@ -1,0 +1,82 @@
+{
+    "resultsPerPage": 3,
+    "startIndex": 0,
+    "totalResults": 3,
+    "vulnerabilities": [
+        {
+            "cve": {
+                "id": "CVE-2024-12345",
+                "published": "2024-06-01T10:00:00.000",
+                "lastModified": "2024-06-02T14:30:00.000",
+                "descriptions": [
+                    {"lang": "en", "value": "SQL injection in login form allows unauthenticated remote code execution"}
+                ],
+                "metrics": {
+                    "cvssMetricV31": [
+                        {
+                            "cvssData": {
+                                "baseScore": 9.8,
+                                "baseSeverity": "CRITICAL"
+                            }
+                        }
+                    ]
+                },
+                "weaknesses": [
+                    {
+                        "description": [
+                            {"lang": "en", "value": "CWE-89"}
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "cve": {
+                "id": "CVE-2024-67890",
+                "published": "2024-07-15T08:00:00.000",
+                "lastModified": "2024-07-16T09:00:00.000",
+                "descriptions": [
+                    {"lang": "en", "value": "Cross-site scripting in admin panel"}
+                ],
+                "metrics": {
+                    "cvssMetricV31": [
+                        {
+                            "cvssData": {
+                                "baseScore": 6.1,
+                                "baseSeverity": "MEDIUM"
+                            }
+                        }
+                    ]
+                },
+                "weaknesses": [
+                    {
+                        "description": [
+                            {"lang": "en", "value": "CWE-79"}
+                        ]
+                    }
+                ]
+            }
+        },
+        {
+            "cve": {
+                "id": "CVE-2024-11111",
+                "published": "2024-08-01T12:00:00.000",
+                "lastModified": "2024-08-01T12:00:00.000",
+                "descriptions": [
+                    {"lang": "en", "value": "Information disclosure via error messages"}
+                ],
+                "metrics": {
+                    "cvssMetricV31": [
+                        {
+                            "cvssData": {
+                                "baseScore": 3.7,
+                                "baseSeverity": "LOW"
+                            }
+                        }
+                    ]
+                },
+                "weaknesses": []
+            }
+        }
+    ]
+}

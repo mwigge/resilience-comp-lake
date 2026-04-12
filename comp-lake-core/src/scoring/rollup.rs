@@ -131,7 +131,11 @@ mod tests {
 
     fn make_score(entity: &str, pct: f64) -> (EntityId, ComplianceScore) {
         let total: usize = 10;
-        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_precision_loss)]
+        #[allow(
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss,
+            clippy::cast_precision_loss
+        )]
         let passing = ((pct / 100.0) * total as f64).round() as usize;
         (
             EntityId::new(entity),
@@ -213,5 +217,171 @@ mod tests {
     fn empty_aggregate_scores_zero() {
         let agg = aggregate_score(&FrameworkId::new("ALL").unwrap(), &[]);
         assert!((agg.score - 0.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn platform_score_is_mean_of_units() {
+        let hierarchy = vec![
+            make_entity("platform", EntityType::Platform, None),
+            make_entity("unit-a", EntityType::Unit, Some("platform")),
+            make_entity("unit-b", EntityType::Unit, Some("platform")),
+            make_entity("team-a1", EntityType::Team, Some("unit-a")),
+            make_entity("team-b1", EntityType::Team, Some("unit-b")),
+            make_entity("proj-a1", EntityType::Project, Some("team-a1")),
+            make_entity("proj-b1", EntityType::Project, Some("team-b1")),
+        ];
+        let scores = vec![make_score("proj-a1", 100.0), make_score("proj-b1", 60.0)];
+
+        let rolled = rollup_scores(&scores, &hierarchy);
+
+        let platform_score = rolled.iter().find(|(id, _)| id.as_str() == "platform");
+        assert!(platform_score.is_some());
+        // team-a1 = 100, team-b1 = 60
+        // unit-a = 100, unit-b = 60
+        // platform = mean(100, 60) = 80
+        let (_, s) = platform_score.unwrap();
+        assert!((s.score - 80.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn single_child_parent_equals_child() {
+        let hierarchy = vec![
+            make_entity("team-a", EntityType::Team, Some("unit-x")),
+            make_entity("proj-1", EntityType::Project, Some("team-a")),
+        ];
+        let scores = vec![make_score("proj-1", 73.0)];
+
+        let rolled = rollup_scores(&scores, &hierarchy);
+        let team_score = rolled.iter().find(|(id, _)| id.as_str() == "team-a");
+        assert!(team_score.is_some());
+        // Single child: parent score == child score with no rounding artefacts
+        let (_, s) = team_score.unwrap();
+        // make_score rounds: 73% of 10 = 7.3 -> round to 7, 7/10 = 70%
+        // So we check exact match to child score
+        let child_score = scores[0].1.score;
+        assert!((s.score - child_score).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn empty_children_produces_no_rollup_not_nan() {
+        // Parent exists but no child scores provided
+        let hierarchy = vec![
+            make_entity("team-a", EntityType::Team, Some("unit-x")),
+            make_entity("proj-1", EntityType::Project, Some("team-a")),
+        ];
+        let scores: Vec<(EntityId, ComplianceScore)> = vec![];
+        let rolled = rollup_scores(&scores, &hierarchy);
+        // No scores to aggregate means no rollup entry (NOT NaN)
+        assert!(rolled.is_empty());
+    }
+
+    #[test]
+    fn aggregate_single_score_equals_itself() {
+        let single = ComplianceScore::new(FrameworkId::new("DORA").unwrap(), 10, 8, 8, 1);
+        let agg = aggregate_score(
+            &FrameworkId::new("AGG").unwrap(),
+            std::slice::from_ref(&single),
+        );
+        assert!((agg.score - single.score).abs() < f64::EPSILON);
+        assert_eq!(agg.controls_total, single.controls_total);
+        assert_eq!(agg.controls_passing, single.controls_passing);
+        assert_eq!(agg.controls_stale, single.controls_stale);
+    }
+
+    #[test]
+    fn rollup_full_hierarchy_bottom_to_top() {
+        // Platform -> Unit -> Team -> Projects
+        let hierarchy = vec![
+            make_entity("platform", EntityType::Platform, None),
+            make_entity("unit-eng", EntityType::Unit, Some("platform")),
+            make_entity("team-a", EntityType::Team, Some("unit-eng")),
+            make_entity("team-b", EntityType::Team, Some("unit-eng")),
+            make_entity("proj-1", EntityType::Project, Some("team-a")),
+            make_entity("proj-2", EntityType::Project, Some("team-a")),
+            make_entity("proj-3", EntityType::Project, Some("team-b")),
+        ];
+        // proj-1=80, proj-2=60 => team-a = 70
+        // proj-3=90 => team-b = 90
+        // unit-eng = mean(70, 90) = 80
+        // platform = mean(80) = 80
+        let scores = vec![
+            make_score("proj-1", 80.0),
+            make_score("proj-2", 60.0),
+            make_score("proj-3", 90.0),
+        ];
+
+        let rolled = rollup_scores(&scores, &hierarchy);
+
+        let team_a = rolled
+            .iter()
+            .find(|(id, _)| id.as_str() == "team-a")
+            .map(|(_, s)| s.score);
+        let team_b = rolled
+            .iter()
+            .find(|(id, _)| id.as_str() == "team-b")
+            .map(|(_, s)| s.score);
+        let unit = rolled
+            .iter()
+            .find(|(id, _)| id.as_str() == "unit-eng")
+            .map(|(_, s)| s.score);
+        let platform = rolled
+            .iter()
+            .find(|(id, _)| id.as_str() == "platform")
+            .map(|(_, s)| s.score);
+
+        assert!(team_a.is_some());
+        assert!(team_b.is_some());
+        assert!(unit.is_some());
+        assert!(platform.is_some());
+
+        assert!((team_a.unwrap() - 70.0).abs() < f64::EPSILON);
+        assert!((team_b.unwrap() - 90.0).abs() < f64::EPSILON);
+        assert!((unit.unwrap() - 80.0).abs() < f64::EPSILON);
+        assert!((platform.unwrap() - 80.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn rollup_aggregates_partial_correctly() {
+        // Two projects where covered > passing (Partial evidence present).
+        // proj-1: total=10, covered=8, passing=5  (3 partials, score=50.0)
+        // proj-2: total=10, covered=6, passing=6  (0 partials, score=60.0)
+        // team rollup should sum fields: total=20, covered=14, passing=11
+        let hierarchy = vec![
+            make_entity("team-a", EntityType::Team, Some("unit-x")),
+            make_entity("proj-1", EntityType::Project, Some("team-a")),
+            make_entity("proj-2", EntityType::Project, Some("team-a")),
+        ];
+        let scores = vec![
+            (
+                EntityId::new("proj-1"),
+                ComplianceScore::new(fw(), 10, 8, 5, 0),
+            ),
+            (
+                EntityId::new("proj-2"),
+                ComplianceScore::new(fw(), 10, 6, 6, 0),
+            ),
+        ];
+
+        let rolled = rollup_scores(&scores, &hierarchy);
+        let team = rolled
+            .iter()
+            .find(|(id, _)| id.as_str() == "team-a")
+            .map(|(_, s)| s)
+            .expect("team-a should have a rollup score");
+
+        assert_eq!(team.controls_total, 20, "total should sum both projects");
+        assert_eq!(
+            team.controls_covered, 14,
+            "covered should sum both projects"
+        );
+        assert_eq!(
+            team.controls_passing, 11,
+            "passing should sum both projects"
+        );
+        // Verify covered != passing is preserved (partial evidence path)
+        assert!(
+            team.controls_covered > team.controls_passing,
+            "rollup must preserve covered > passing when partial evidence exists"
+        );
     }
 }

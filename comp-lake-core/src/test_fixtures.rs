@@ -4,9 +4,7 @@
 use chrono::{DateTime, Utc};
 
 use crate::models::control::{Control, ControlFamily, ControlId, Severity};
-use crate::models::evidence::{
-    Evidence, EvidenceId, EvidenceResult, EvidenceType, SourceSystem,
-};
+use crate::models::evidence::{Evidence, EvidenceId, EvidenceResult, EvidenceType, SourceSystem};
 use crate::models::framework::{Framework, FrameworkId, HarvestSource, Region};
 use crate::models::freshness::compute_expires_at;
 use crate::models::org::EntityId;

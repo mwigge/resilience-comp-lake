@@ -3,9 +3,7 @@ use serde::Deserialize;
 
 use comp_lake_core::models::framework::FrameworkId;
 
-use crate::harvester::{
-    HarvestCadence, HarvestConfig, HarvestError, HarvestResult, Harvester,
-};
+use crate::harvester::{HarvestCadence, HarvestConfig, HarvestError, HarvestResult, Harvester};
 
 const SCORECARD_API_URL: &str = "https://api.securityscorecards.dev";
 
@@ -13,6 +11,7 @@ const SCORECARD_API_URL: &str = "https://api.securityscorecards.dev";
 pub struct ScorecardHarvester {
     framework_ids: Vec<FrameworkId>,
     repos: Vec<String>,
+    base_url: &'static str,
 }
 
 impl ScorecardHarvester {
@@ -24,7 +23,17 @@ impl ScorecardHarvester {
         Self {
             framework_ids: vec![FrameworkId::new("OSSF-SCORECARD").expect("valid framework ID")],
             repos,
+            base_url: SCORECARD_API_URL,
         }
+    }
+
+    /// Create a harvester with a custom base URL (for testing with mock servers).
+    #[must_use]
+    // Available for integration testing
+    pub fn with_base_url(repos: Vec<String>, base_url: &'static str) -> Self {
+        let mut h = Self::new(repos);
+        h.base_url = base_url;
+        h
     }
 }
 
@@ -47,18 +56,19 @@ impl Harvester for ScorecardHarvester {
     ) -> std::pin::Pin<
         Box<dyn std::future::Future<Output = Result<HarvestResult, HarvestError>> + Send + 'a>,
     > {
-        Box::pin(harvest_scorecard(config, &self.repos))
+        Box::pin(harvest_scorecard(config, &self.repos, self.base_url))
     }
 }
 
 async fn harvest_scorecard(
     config: &HarvestConfig,
     repos: &[String],
+    base_url: &str,
 ) -> Result<HarvestResult, HarvestError> {
     let mut all_results = Vec::new();
 
     for repo in repos {
-        match fetch_scorecard(config, repo).await {
+        match fetch_scorecard(config, repo, base_url).await {
             Ok(result) => all_results.push(result),
             Err(HarvestError::Api { status: 404, .. }) => {
                 tracing::warn!(repo = %repo, "no scorecard available, skipping");
@@ -67,18 +77,16 @@ async fn harvest_scorecard(
         }
     }
 
-    let framework_id = FrameworkId::new("OSSF-SCORECARD")
-        .map_err(|e| HarvestError::Parse(e.to_string()))?;
-    let framework = comp_lake_core::models::framework::Framework::builder(
-        framework_id,
-        "OpenSSF Scorecard",
-    )
-    .version("4.0")
-    .region(comp_lake_core::models::framework::Region::Global)
-    .authority("OpenSSF")
-    .harvest_source(comp_lake_core::models::framework::HarvestSource::ScorecardApi)
-    .last_harvested(Utc::now())
-    .build();
+    let framework_id =
+        FrameworkId::new("OSSF-SCORECARD").map_err(|e| HarvestError::Parse(e.to_string()))?;
+    let framework =
+        comp_lake_core::models::framework::Framework::builder(framework_id, "OpenSSF Scorecard")
+            .version("4.0")
+            .region(comp_lake_core::models::framework::Region::Global)
+            .authority("OpenSSF")
+            .harvest_source(comp_lake_core::models::framework::HarvestSource::ScorecardApi)
+            .last_harvested(Utc::now())
+            .build();
 
     Ok(HarvestResult {
         framework,
@@ -96,8 +104,9 @@ async fn harvest_scorecard(
 async fn fetch_scorecard(
     config: &HarvestConfig,
     repo: &str,
+    base_url: &str,
 ) -> Result<ScorecardResult, HarvestError> {
-    let url = format!("{SCORECARD_API_URL}/projects/github.com/{repo}");
+    let url = format!("{base_url}/projects/github.com/{repo}");
 
     let response = config
         .http_client
@@ -234,7 +243,11 @@ mod tests {
     #[test]
     fn check_scores_extracted() {
         let result = parse_scorecard_response(MOCK_SCORECARD).unwrap();
-        let code_review = result.checks.iter().find(|c| c.name == "Code-Review").unwrap();
+        let code_review = result
+            .checks
+            .iter()
+            .find(|c| c.name == "Code-Review")
+            .unwrap();
         assert_eq!(code_review.score, 9);
     }
 
@@ -275,7 +288,10 @@ mod tests {
             .iter()
             .filter(|c| check_to_control_mapping(c).is_some())
             .count();
-        assert!(mapped_count >= 10, "only {mapped_count} checks mapped, need >= 10");
+        assert!(
+            mapped_count >= 10,
+            "only {mapped_count} checks mapped, need >= 10"
+        );
     }
 
     #[test]
@@ -301,7 +317,11 @@ mod tests {
     #[test]
     fn documentation_url_extracted() {
         let result = parse_scorecard_response(MOCK_SCORECARD).unwrap();
-        let code_review = result.checks.iter().find(|c| c.name == "Code-Review").unwrap();
+        let code_review = result
+            .checks
+            .iter()
+            .find(|c| c.name == "Code-Review")
+            .unwrap();
         assert!(code_review.documentation.is_some());
         assert!(code_review
             .documentation
@@ -313,7 +333,8 @@ mod tests {
 
     #[test]
     fn empty_checks_parses() {
-        let json = r#"{"date": "2024-01-01", "repo": {"name": "test"}, "score": 0.0, "checks": []}"#;
+        let json =
+            r#"{"date": "2024-01-01", "repo": {"name": "test"}, "score": 0.0, "checks": []}"#;
         let result = parse_scorecard_response(json).unwrap();
         assert!(result.checks.is_empty());
     }

@@ -5,7 +5,11 @@ use comp_lake_core::models::framework::FrameworkId;
 
 /// Determines if a harvester is due based on its cadence and last harvest time.
 #[must_use]
-pub fn is_due(cadence: HarvestCadence, last_harvested: Option<DateTime<Utc>>, now: DateTime<Utc>) -> bool {
+pub fn is_due(
+    cadence: HarvestCadence,
+    last_harvested: Option<DateTime<Utc>>,
+    now: DateTime<Utc>,
+) -> bool {
     let Some(last) = last_harvested else {
         return true; // never harvested
     };
@@ -122,6 +126,9 @@ mod tests {
         assert_eq!(cadence_to_duration(HarvestCadence::Daily).num_days(), 1);
         assert_eq!(cadence_to_duration(HarvestCadence::Weekly).num_days(), 7);
         assert_eq!(cadence_to_duration(HarvestCadence::Monthly).num_days(), 30);
-        assert_eq!(cadence_to_duration(HarvestCadence::OnRelease).num_days(), 365);
+        assert_eq!(
+            cadence_to_duration(HarvestCadence::OnRelease).num_days(),
+            365
+        );
     }
 }

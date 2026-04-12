@@ -123,11 +123,7 @@ mod tests {
         std::fs::create_dir_all(&fw_dir).unwrap();
 
         for month in 1..=5 {
-            std::fs::write(
-                fw_dir.join(format!("2026-{month:02}-01.parquet")),
-                b"test",
-            )
-            .unwrap();
+            std::fs::write(fw_dir.join(format!("2026-{month:02}-01.parquet")), b"test").unwrap();
         }
 
         let deleted = apply_retention(dir.path(), &fw(), 3).unwrap();

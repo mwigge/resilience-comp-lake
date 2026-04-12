@@ -18,7 +18,15 @@ impl ControlId {
         if id.is_empty() {
             return Err(ControlIdError::Empty);
         }
-        if !id.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == '.' || c == ':' || c == '(' || c == ')') {
+        if !id.chars().all(|c| {
+            c.is_alphanumeric()
+                || c == '-'
+                || c == '_'
+                || c == '.'
+                || c == ':'
+                || c == '('
+                || c == ')'
+        }) {
             return Err(ControlIdError::InvalidChars);
         }
         Ok(Self(id))
