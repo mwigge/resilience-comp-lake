@@ -116,4 +116,26 @@ mod tests {
             assert_eq!(t, deserialized);
         }
     }
+
+    #[test]
+    fn stale_warning_just_over_25_percent() {
+        // 2 stale out of 7 total (covered=5, stale=2) => 2/7 = 28.6% > 25%
+        let score = ComplianceScore::new(FrameworkId::new("DORA").unwrap(), 10, 5, 4, 2);
+        assert!(stale_warning(&score));
+    }
+
+    #[test]
+    fn trend_zero_to_zero_is_stable() {
+        assert_eq!(compute_trend(0.0, 0.0), Trend::Stable);
+    }
+
+    #[test]
+    fn trend_large_improvement() {
+        assert_eq!(compute_trend(100.0, 0.0), Trend::Improving);
+    }
+
+    #[test]
+    fn trend_large_degradation() {
+        assert_eq!(compute_trend(0.0, 100.0), Trend::Degrading);
+    }
 }

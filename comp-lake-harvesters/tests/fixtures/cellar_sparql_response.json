@@ -1,0 +1,31 @@
+{
+    "results": {
+        "bindings": [
+            {
+                "article": {"type": "uri", "value": "http://publications.europa.eu/resource/cellar/art24"},
+                "articleNumber": {"type": "literal", "value": "24"},
+                "title": {"type": "literal", "value": "General requirements for ICT testing"}
+            },
+            {
+                "article": {"type": "uri", "value": "http://publications.europa.eu/resource/cellar/art25"},
+                "articleNumber": {"type": "literal", "value": "25"},
+                "title": {"type": "literal", "value": "Testing of ICT tools and systems"}
+            },
+            {
+                "article": {"type": "uri", "value": "http://publications.europa.eu/resource/cellar/art26"},
+                "articleNumber": {"type": "literal", "value": "26"},
+                "title": {"type": "literal", "value": "Advanced testing of ICT tools, systems and processes based on TLPT"}
+            },
+            {
+                "article": {"type": "uri", "value": "http://publications.europa.eu/resource/cellar/art9"},
+                "articleNumber": {"type": "literal", "value": "9"},
+                "title": {"type": "literal", "value": "Protection and prevention"}
+            },
+            {
+                "article": {"type": "uri", "value": "http://publications.europa.eu/resource/cellar/art1"},
+                "articleNumber": {"type": "literal", "value": "1"},
+                "title": {"type": "literal", "value": "Subject matter"}
+            }
+        ]
+    }
+}

@@ -1,0 +1,43 @@
+{
+    "date": "2024-09-15",
+    "repo": {"name": "github.com/example/secure-app"},
+    "score": 8.2,
+    "checks": [
+        {
+            "name": "Code-Review",
+            "score": 10,
+            "reason": "Found 50/50 approved changesets -- score normalized to 10",
+            "documentation": {"url": "https://github.com/ossf/scorecard/blob/main/docs/checks.md#code-review"}
+        },
+        {
+            "name": "Branch-Protection",
+            "score": 8,
+            "reason": "Branch protection settings enabled, missing status checks"
+        },
+        {
+            "name": "Vulnerabilities",
+            "score": 10,
+            "reason": "0 existing vulnerabilities detected"
+        },
+        {
+            "name": "SAST",
+            "score": 7,
+            "reason": "SAST tool detected: CodeQL"
+        },
+        {
+            "name": "Fuzzing",
+            "score": 10,
+            "reason": "Fuzzing integration detected via OSS-Fuzz"
+        },
+        {
+            "name": "Dependency-Update-Tool",
+            "score": 10,
+            "reason": "Dependabot detected"
+        },
+        {
+            "name": "Token-Permissions",
+            "score": 5,
+            "reason": "GitHub workflow tokens have excessive permissions"
+        }
+    ]
+}

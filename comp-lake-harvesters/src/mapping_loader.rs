@@ -48,10 +48,10 @@ pub fn load_mapping_toml(toml_str: &str) -> Result<Vec<ControlMapping>, HarvestE
     file.mappings
         .into_iter()
         .map(|m| {
-            let source = ControlId::new(&m.source)
-                .map_err(|e| HarvestError::Parse(e.to_string()))?;
-            let target = ControlId::new(&m.target)
-                .map_err(|e| HarvestError::Parse(e.to_string()))?;
+            let source =
+                ControlId::new(&m.source).map_err(|e| HarvestError::Parse(e.to_string()))?;
+            let target =
+                ControlId::new(&m.target).map_err(|e| HarvestError::Parse(e.to_string()))?;
 
             let relationship = match m.relationship.as_str() {
                 "Equivalent" => MappingRelationship::Equivalent,
@@ -69,21 +69,13 @@ pub fn load_mapping_toml(toml_str: &str) -> Result<Vec<ControlMapping>, HarvestE
                 "High" => Confidence::High,
                 "Medium" => Confidence::Medium,
                 "Low" => Confidence::Low,
-                other => {
-                    return Err(HarvestError::Parse(format!(
-                        "unknown confidence: {other}"
-                    )))
-                }
+                other => return Err(HarvestError::Parse(format!("unknown confidence: {other}"))),
             };
 
             let direction = match m.direction.as_str() {
                 "Bidirectional" => MappingDirection::Bidirectional,
                 "SourceToTarget" => MappingDirection::SourceToTarget,
-                other => {
-                    return Err(HarvestError::Parse(format!(
-                        "unknown direction: {other}"
-                    )))
-                }
+                other => return Err(HarvestError::Parse(format!("unknown direction: {other}"))),
             };
 
             let provenance = match m.provenance.as_str() {
@@ -91,11 +83,7 @@ pub fn load_mapping_toml(toml_str: &str) -> Result<Vec<ControlMapping>, HarvestE
                 "NistOlir" => MappingProvenance::NistOlir,
                 "OscalProfile" => MappingProvenance::OscalProfile,
                 "Manual" => MappingProvenance::Manual,
-                other => {
-                    return Err(HarvestError::Parse(format!(
-                        "unknown provenance: {other}"
-                    )))
-                }
+                other => return Err(HarvestError::Parse(format!("unknown provenance: {other}"))),
             };
 
             Ok(ControlMapping::new(
@@ -219,10 +207,20 @@ provenance = "Manual"
         let path = std::path::Path::new("data/seed/mappings/dora_iso27001.toml");
         if path.exists() {
             let mappings = load_mapping_file(path).unwrap();
-            assert!(mappings.len() >= 15, "expected >=15 mappings, got {}", mappings.len());
+            assert!(
+                mappings.len() >= 15,
+                "expected >=15 mappings, got {}",
+                mappings.len()
+            );
 
-            let high_count = mappings.iter().filter(|m| m.confidence == Confidence::High).count();
-            assert!(high_count >= 10, "expected >=10 High confidence, got {high_count}");
+            let high_count = mappings
+                .iter()
+                .filter(|m| m.confidence == Confidence::High)
+                .count();
+            assert!(
+                high_count >= 10,
+                "expected >=10 High confidence, got {high_count}"
+            );
         }
     }
 
@@ -231,7 +229,11 @@ provenance = "Manual"
         let path = std::path::Path::new("data/seed/mappings/dora_nis2.toml");
         if path.exists() {
             let mappings = load_mapping_file(path).unwrap();
-            assert!(mappings.len() >= 10, "expected >=10 mappings, got {}", mappings.len());
+            assert!(
+                mappings.len() >= 10,
+                "expected >=10 mappings, got {}",
+                mappings.len()
+            );
         }
     }
 
@@ -240,7 +242,11 @@ provenance = "Manual"
         let path = std::path::Path::new("data/seed/mappings/dora_cra.toml");
         if path.exists() {
             let mappings = load_mapping_file(path).unwrap();
-            assert!(mappings.len() >= 8, "expected >=8 mappings, got {}", mappings.len());
+            assert!(
+                mappings.len() >= 8,
+                "expected >=8 mappings, got {}",
+                mappings.len()
+            );
         }
     }
 
@@ -249,7 +255,11 @@ provenance = "Manual"
         let path = std::path::Path::new("data/seed/mappings/dora_gdpr.toml");
         if path.exists() {
             let mappings = load_mapping_file(path).unwrap();
-            assert!(mappings.len() >= 3, "expected >=3 mappings, got {}", mappings.len());
+            assert!(
+                mappings.len() >= 3,
+                "expected >=3 mappings, got {}",
+                mappings.len()
+            );
         }
     }
 
@@ -259,7 +269,11 @@ provenance = "Manual"
         if path.exists() {
             let all = load_all_mappings(path).unwrap();
             // DORA↔ISO(20) + DORA↔NIS2(12) + DORA↔CRA(8) + DORA↔GDPR(4) = 44
-            assert!(all.len() >= 40, "expected >=40 total mappings, got {}", all.len());
+            assert!(
+                all.len() >= 40,
+                "expected >=40 total mappings, got {}",
+                all.len()
+            );
         }
     }
 

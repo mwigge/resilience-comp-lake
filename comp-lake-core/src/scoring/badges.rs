@@ -104,7 +104,11 @@ mod tests {
 
     fn make_score(id: &str, pct: f64) -> ComplianceScore {
         let total: usize = 100;
-        #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss, clippy::cast_precision_loss)]
+        #[allow(
+            clippy::cast_possible_truncation,
+            clippy::cast_sign_loss,
+            clippy::cast_precision_loss
+        )]
         let passing = ((pct / 100.0) * total as f64) as usize;
         ComplianceScore::new(FrameworkId::new(id).unwrap(), total, passing, passing, 0)
     }
@@ -153,5 +157,68 @@ mod tests {
     fn empty_scores_no_badges() {
         let badges = evaluate_cross_badges(&[]);
         assert!(badges.is_empty());
+    }
+
+    #[test]
+    fn cross_framework_badge_is_minimum_tier() {
+        // If one framework is below Bronze, FullSpectrum is NOT awarded
+        // even if all others are Gold.
+        let scores = vec![
+            make_score("DORA", 90.0),
+            make_score("NIST-800-53", 85.0),
+            make_score("PCI-DSS-4", 40.0), // Below Bronze threshold
+        ];
+        let badges = evaluate_cross_badges(&scores);
+        assert!(!badges.contains(&CrossFrameworkBadge::FullSpectrum));
+        assert!(!badges.contains(&CrossFrameworkBadge::ResilienceLeader));
+    }
+
+    #[test]
+    fn cross_badge_pci_champion() {
+        let scores = vec![make_score("PCI-DSS-4", 75.0)];
+        let badges = evaluate_cross_badges(&scores);
+        assert!(badges.contains(&CrossFrameworkBadge::PciChampion));
+    }
+
+    #[test]
+    fn cross_badge_pci_champion_below_silver() {
+        let scores = vec![make_score("PCI-DSS-4", 55.0)];
+        let badges = evaluate_cross_badges(&scores);
+        assert!(!badges.contains(&CrossFrameworkBadge::PciChampion));
+    }
+
+    #[test]
+    fn eu_compliant_requires_all_four() {
+        // Missing CRA framework — should not award EuCompliant
+        let scores = vec![
+            make_score("DORA", 80.0),
+            make_score("NIS2", 75.0),
+            make_score("GDPR", 90.0),
+        ];
+        let badges = evaluate_cross_badges(&scores);
+        assert!(!badges.contains(&CrossFrameworkBadge::EuCompliant));
+    }
+
+    #[test]
+    fn badge_tier_ordering() {
+        assert!(BadgeTier::Platinum > BadgeTier::Gold);
+        assert!(BadgeTier::Gold > BadgeTier::Silver);
+        assert!(BadgeTier::Silver > BadgeTier::Bronze);
+        assert!(BadgeTier::Bronze > BadgeTier::None);
+    }
+
+    #[test]
+    fn badge_serde_roundtrip() {
+        for tier in [
+            BadgeTier::None,
+            BadgeTier::Bronze,
+            BadgeTier::Silver,
+            BadgeTier::Gold,
+            BadgeTier::Platinum,
+        ] {
+            let json = serde_json::to_string(&tier).unwrap();
+            let deserialized: BadgeTier = serde_json::from_str(&json).unwrap();
+            assert_eq!(tier, deserialized);
+        }
     }
 }

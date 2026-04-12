@@ -56,15 +56,13 @@ fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     let store = if let Some(ref path) = cli.db {
-        comp_lake_storage::store::CompLakeStore::open(path)
-            .context("failed to open database")?
+        comp_lake_storage::store::CompLakeStore::open(path).context("failed to open database")?
     } else {
         comp_lake_storage::store::CompLakeStore::in_memory()
             .context("failed to create in-memory database")?
     };
 
-    comp_lake_storage::views::create_views(store.conn())
-        .context("failed to create views")?;
+    comp_lake_storage::views::create_views(store.conn()).context("failed to create views")?;
 
     match cli.command {
         Commands::Seed { data_dir } => cmd_seed(&store, &data_dir),
@@ -106,7 +104,8 @@ fn cmd_seed(
 
                 println!(
                     "  loaded {} — {} controls",
-                    result.framework.framework_id, result.controls.len()
+                    result.framework.framework_id,
+                    result.controls.len()
                 );
             }
         }
@@ -150,7 +149,8 @@ fn cmd_score(
     };
 
     let mut stmt = store.conn().prepare(query)?;
-    let param_refs: Vec<&dyn duckdb::ToSql> = params.iter().map(|p| p as &dyn duckdb::ToSql).collect();
+    let param_refs: Vec<&dyn duckdb::ToSql> =
+        params.iter().map(|p| p as &dyn duckdb::ToSql).collect();
     let rows = stmt.query_map(param_refs.as_slice(), |row| {
         Ok((
             row.get::<_, String>(0)?,
@@ -186,10 +186,7 @@ fn cmd_score(
     Ok(())
 }
 
-fn cmd_gaps(
-    store: &comp_lake_storage::store::CompLakeStore,
-    entity: &str,
-) -> anyhow::Result<()> {
+fn cmd_gaps(store: &comp_lake_storage::store::CompLakeStore, entity: &str) -> anyhow::Result<()> {
     let mut stmt = store.conn().prepare(
         "SELECT priority_rank, framework_name, control_id, title, severity, gap_reason \
          FROM v_coverage_gaps WHERE entity_id = ? ORDER BY priority_rank LIMIT 20",
@@ -219,34 +216,65 @@ fn cmd_gaps(
         } else {
             title
         };
-        println!(
-            "{rank:>4} {fw:<12} {ctrl:<16} {title_short:<30} {sev:>8} {reason:<14}"
-        );
+        println!("{rank:>4} {fw:<12} {ctrl:<16} {title_short:<30} {sev:>8} {reason:<14}");
     }
     Ok(())
 }
 
 fn cmd_demo(store: &comp_lake_storage::store::CompLakeStore) -> anyhow::Result<()> {
     use chrono::Utc;
-    use comp_lake_core::models::control::ControlId;
-    use comp_lake_core::models::evidence::{
-        Evidence, EvidenceId, EvidenceResult, EvidenceType, SourceSystem,
-    };
-    use comp_lake_core::models::freshness::compute_expires_at;
+
+    let entity_count = demo_seed_org(store)?;
+    println!("Created {entity_count} org entities");
+
+    let ev_count = demo_seed_evidence(store, Utc::now())?;
+    println!("Created {ev_count} evidence records across 3 projects");
+    println!("\nTry:");
+    println!("  comp-lake --db <db> score --entity proj-payments");
+    println!("  comp-lake --db <db> score --entity proj-payments --framework DORA");
+    println!("  comp-lake --db <db> gaps --entity proj-payments");
+    Ok(())
+}
+
+fn demo_seed_org(store: &comp_lake_storage::store::CompLakeStore) -> anyhow::Result<usize> {
     use comp_lake_core::models::org::{EntityId, EntityType, OrgEntity};
 
-    // Create org hierarchy
-    let entities = [
+    let entities: &[(&str, EntityType, &str, Option<&str>)] = &[
         ("acme-platform", EntityType::Platform, "ACME Platform", None),
-        ("eng-unit", EntityType::Unit, "Engineering", Some("acme-platform")),
-        ("team-alpha", EntityType::Team, "Team Alpha", Some("eng-unit")),
+        (
+            "eng-unit",
+            EntityType::Unit,
+            "Engineering",
+            Some("acme-platform"),
+        ),
+        (
+            "team-alpha",
+            EntityType::Team,
+            "Team Alpha",
+            Some("eng-unit"),
+        ),
         ("team-beta", EntityType::Team, "Team Beta", Some("eng-unit")),
-        ("proj-payments", EntityType::Project, "Payments Service", Some("team-alpha")),
-        ("proj-auth", EntityType::Project, "Auth Service", Some("team-alpha")),
-        ("proj-gateway", EntityType::Project, "API Gateway", Some("team-beta")),
+        (
+            "proj-payments",
+            EntityType::Project,
+            "Payments Service",
+            Some("team-alpha"),
+        ),
+        (
+            "proj-auth",
+            EntityType::Project,
+            "Auth Service",
+            Some("team-alpha"),
+        ),
+        (
+            "proj-gateway",
+            EntityType::Project,
+            "API Gateway",
+            Some("team-beta"),
+        ),
     ];
 
-    for (id, etype, name, parent) in &entities {
+    for (id, etype, name, parent) in entities {
         store.upsert_org_entity(&OrgEntity::new(
             EntityId::new(*id),
             *etype,
@@ -254,20 +282,35 @@ fn cmd_demo(store: &comp_lake_storage::store::CompLakeStore) -> anyhow::Result<(
             parent.map(EntityId::new),
         ))?;
     }
-    println!("Created {} org entities", entities.len());
+    Ok(entities.len())
+}
 
-    // Create sample evidence — some DORA controls pass, some fail, some untested
-    let now = Utc::now();
-    let passing_controls = [
-        "DORA-ART-5", "DORA-ART-9", "DORA-ART-10", "DORA-ART-11",
-        "DORA-ART-17", "DORA-ART-24", "DORA-ART-25",
+fn demo_seed_evidence(
+    store: &comp_lake_storage::store::CompLakeStore,
+    now: chrono::DateTime<chrono::Utc>,
+) -> anyhow::Result<usize> {
+    use comp_lake_core::models::control::ControlId;
+    use comp_lake_core::models::evidence::{
+        Evidence, EvidenceId, EvidenceResult, EvidenceType, SourceSystem,
+    };
+    use comp_lake_core::models::freshness::compute_expires_at;
+    use comp_lake_core::models::org::EntityId;
+
+    let passing = [
+        "DORA-ART-5",
+        "DORA-ART-9",
+        "DORA-ART-10",
+        "DORA-ART-11",
+        "DORA-ART-17",
+        "DORA-ART-24",
+        "DORA-ART-25",
     ];
-    let failing_controls = ["DORA-ART-19", "DORA-ART-28"];
-    let partial_controls = ["DORA-ART-26"];
+    let failing = ["DORA-ART-19", "DORA-ART-28"];
+    let partial = ["DORA-ART-26"];
 
-    let mut ev_count = 0;
+    let mut count = 0;
     for entity in ["proj-payments", "proj-auth", "proj-gateway"] {
-        for ctrl_id in &passing_controls {
+        for ctrl_id in &passing {
             let et = EvidenceType::ChaosExperiment;
             store.upsert_evidence(&Evidence {
                 evidence_id: EvidenceId::new(),
@@ -281,9 +324,9 @@ fn cmd_demo(store: &comp_lake_storage::store::CompLakeStore) -> anyhow::Result<(
                 observed_at: now,
                 expires_at: compute_expires_at(now, &et),
             })?;
-            ev_count += 1;
+            count += 1;
         }
-        for ctrl_id in &failing_controls {
+        for ctrl_id in &failing {
             let et = EvidenceType::ChaosExperiment;
             store.upsert_evidence(&Evidence {
                 evidence_id: EvidenceId::new(),
@@ -297,9 +340,9 @@ fn cmd_demo(store: &comp_lake_storage::store::CompLakeStore) -> anyhow::Result<(
                 observed_at: now,
                 expires_at: compute_expires_at(now, &et),
             })?;
-            ev_count += 1;
+            count += 1;
         }
-        for ctrl_id in &partial_controls {
+        for ctrl_id in &partial {
             let et = EvidenceType::GameDay;
             store.upsert_evidence(&Evidence {
                 evidence_id: EvidenceId::new(),
@@ -313,16 +356,10 @@ fn cmd_demo(store: &comp_lake_storage::store::CompLakeStore) -> anyhow::Result<(
                 observed_at: now,
                 expires_at: compute_expires_at(now, &et),
             })?;
-            ev_count += 1;
+            count += 1;
         }
     }
-
-    println!("Created {ev_count} evidence records across 3 projects");
-    println!("\nTry:");
-    println!("  comp-lake --db <db> score --entity proj-payments");
-    println!("  comp-lake --db <db> score --entity proj-payments --framework DORA");
-    println!("  comp-lake --db <db> gaps --entity proj-payments");
-    Ok(())
+    Ok(count)
 }
 
 fn cmd_serve(port: u16) {

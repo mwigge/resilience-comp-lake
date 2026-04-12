@@ -16,43 +16,41 @@ use comp_lake_storage::views;
 /// End-to-end: seed → store → views → scoring engine cross-validation
 #[test]
 fn seed_store_score_roundtrip() {
-    let store = CompLakeStore::in_memory().unwrap();
-    views::create_views(store.conn()).unwrap();
+    let store = CompLakeStore::in_memory().expect("create in-memory store");
+    views::create_views(store.conn()).expect("create views");
 
     // Seed framework
-    let fw = Framework::builder(FrameworkId::new("DORA").unwrap(), "DORA")
-        .version("2022/2554")
-        .region(Region::Eu)
-        .authority("EU/EP")
-        .harvest_source(HarvestSource::Manual)
-        .build();
-    store.upsert_framework(&fw).unwrap();
+    let fw = Framework::builder(
+        FrameworkId::new("DORA").expect("valid framework ID"),
+        "DORA",
+    )
+    .version("2022/2554")
+    .region(Region::Eu)
+    .authority("EU/EP")
+    .harvest_source(HarvestSource::Manual)
+    .build();
+    store.upsert_framework(&fw).expect("upsert framework");
 
     // Seed 4 controls (all testing-relevant)
     let ctrl_ids = ["C1", "C2", "C3", "C4"];
     let mut controls = Vec::new();
     for id in &ctrl_ids {
         let ctrl = Control::builder(
-            ControlId::new(*id).unwrap(),
-            FrameworkId::new("DORA").unwrap(),
+            ControlId::new(*id).expect("valid control ID"),
+            FrameworkId::new("DORA").expect("valid framework ID"),
             format!("Control {id}"),
         )
         .severity(Severity::High)
         .family(ControlFamily::new("Testing"))
         .testing_relevant(true)
         .build();
-        store.upsert_control(&ctrl).unwrap();
+        store.upsert_control(&ctrl).expect("upsert control");
         controls.push(ctrl);
     }
 
     // Seed org entity
-    let entity = OrgEntity::new(
-        EntityId::new("team-a"),
-        EntityType::Project,
-        "Team A",
-        None,
-    );
-    store.upsert_org_entity(&entity).unwrap();
+    let entity = OrgEntity::new(EntityId::new("team-a"), EntityType::Project, "Team A", None);
+    store.upsert_org_entity(&entity).expect("upsert org entity");
 
     // Seed evidence: C1=Pass, C2=Pass, C3=Fail, C4=no evidence
     let now = Utc::now();
@@ -65,7 +63,7 @@ fn seed_store_score_roundtrip() {
         let ev = Evidence {
             evidence_id: EvidenceId::new(),
             entity_id: EntityId::new("team-a"),
-            control_id: ControlId::new(ctrl_id).unwrap(),
+            control_id: ControlId::new(ctrl_id).expect("valid control ID"),
             evidence_type: et,
             source_system: SourceSystem::new("tumult"),
             result,
@@ -74,7 +72,7 @@ fn seed_store_score_roundtrip() {
             observed_at: now,
             expires_at: compute_expires_at(now, &et),
         };
-        store.upsert_evidence(&ev).unwrap();
+        store.upsert_evidence(&ev).expect("upsert evidence");
     }
 
     // Verify via DuckDB view
@@ -86,7 +84,7 @@ fn seed_store_score_roundtrip() {
             ["team-a", "DORA"],
             |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
         )
-        .unwrap();
+        .expect("query v_scores");
     assert_eq!(view_total, 4);
     assert_eq!(view_passing, 2);
     assert!((view_score - 50.0).abs() < f64::EPSILON);
@@ -99,7 +97,7 @@ fn seed_store_score_roundtrip() {
     ];
     let engine_score = compute_entity_framework_score(
         &EntityId::new("team-a"),
-        &FrameworkId::new("DORA").unwrap(),
+        &FrameworkId::new("DORA").expect("valid framework ID"),
         &controls,
         &evidence,
         now,
@@ -115,41 +113,41 @@ fn seed_store_score_roundtrip() {
 /// End-to-end: cross-framework mapping stored and queryable via view
 #[test]
 fn cross_framework_mapping_view() {
-    let store = CompLakeStore::in_memory().unwrap();
-    views::create_views(store.conn()).unwrap();
+    let store = CompLakeStore::in_memory().expect("create in-memory store");
+    views::create_views(store.conn()).expect("create views");
 
     // Two frameworks
     for (id, name) in [("DORA", "DORA"), ("ISO", "ISO 27001")] {
-        let fw = Framework::builder(FrameworkId::new(id).unwrap(), name)
+        let fw = Framework::builder(FrameworkId::new(id).expect("valid framework ID"), name)
             .version("1.0")
             .authority("Test")
             .build();
-        store.upsert_framework(&fw).unwrap();
+        store.upsert_framework(&fw).expect("upsert framework");
     }
 
     // One control each
     for (id, fw) in [("D1", "DORA"), ("I1", "ISO")] {
         let ctrl = Control::builder(
-            ControlId::new(id).unwrap(),
-            FrameworkId::new(fw).unwrap(),
+            ControlId::new(id).expect("valid control ID"),
+            FrameworkId::new(fw).expect("valid framework ID"),
             format!("Control {id}"),
         )
         .severity(Severity::High)
         .testing_relevant(true)
         .build();
-        store.upsert_control(&ctrl).unwrap();
+        store.upsert_control(&ctrl).expect("upsert control");
     }
 
     // Mapping
     let mapping = ControlMapping::new(
-        ControlId::new("D1").unwrap(),
-        ControlId::new("I1").unwrap(),
+        ControlId::new("D1").expect("valid"),
+        ControlId::new("I1").expect("valid"),
         MappingRelationship::Equivalent,
         Confidence::High,
         MappingDirection::Bidirectional,
         MappingProvenance::EbaMapping,
     );
-    store.upsert_mapping(&mapping).unwrap();
+    store.upsert_mapping(&mapping).expect("upsert mapping");
 
     // Verify via view
     let count: usize = store
@@ -157,39 +155,37 @@ fn cross_framework_mapping_view() {
         .query_row("SELECT COUNT(*) FROM v_cross_framework_map", [], |row| {
             row.get(0)
         })
-        .unwrap();
+        .expect("count mappings");
     assert_eq!(count, 1);
 }
 
 /// End-to-end: coverage gaps view shows untested controls
 #[test]
 fn coverage_gaps_identify_untested() {
-    let store = CompLakeStore::in_memory().unwrap();
-    views::create_views(store.conn()).unwrap();
+    let store = CompLakeStore::in_memory().expect("create in-memory store");
+    views::create_views(store.conn()).expect("create views");
 
-    let fw = Framework::builder(FrameworkId::new("DORA").unwrap(), "DORA")
-        .version("1.0")
-        .authority("Test")
-        .build();
-    store.upsert_framework(&fw).unwrap();
+    let fw = Framework::builder(
+        FrameworkId::new("DORA").expect("valid framework ID"),
+        "DORA",
+    )
+    .version("1.0")
+    .authority("Test")
+    .build();
+    store.upsert_framework(&fw).expect("upsert framework");
 
     let ctrl = Control::builder(
-        ControlId::new("C1").unwrap(),
-        FrameworkId::new("DORA").unwrap(),
+        ControlId::new("C1").expect("valid"),
+        FrameworkId::new("DORA").expect("valid framework ID"),
         "Untested Control",
     )
     .severity(Severity::High)
     .testing_relevant(true)
     .build();
-    store.upsert_control(&ctrl).unwrap();
+    store.upsert_control(&ctrl).expect("upsert control");
 
-    let entity = OrgEntity::new(
-        EntityId::new("team-a"),
-        EntityType::Project,
-        "Team A",
-        None,
-    );
-    store.upsert_org_entity(&entity).unwrap();
+    let entity = OrgEntity::new(EntityId::new("team-a"), EntityType::Project, "Team A", None);
+    store.upsert_org_entity(&entity).expect("upsert org entity");
 
     // No evidence — should appear as gap
     let gap_reason: String = store
@@ -199,7 +195,7 @@ fn coverage_gaps_identify_untested() {
             ["team-a", "C1"],
             |row| row.get(0),
         )
-        .unwrap();
+        .expect("query coverage gaps");
     assert_eq!(gap_reason, "never_tested");
 }
 
@@ -212,7 +208,7 @@ fn make_ev(
     Evidence {
         evidence_id: EvidenceId::new(),
         entity_id: EntityId::new("team-a"),
-        control_id: ControlId::new(ctrl_id).unwrap(),
+        control_id: ControlId::new(ctrl_id).expect("valid control ID"),
         evidence_type: et,
         source_system: SourceSystem::new("tumult"),
         result,

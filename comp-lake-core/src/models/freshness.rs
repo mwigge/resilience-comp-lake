@@ -29,7 +29,7 @@ pub fn compute_expires_at(
 /// Returns `true` if the evidence has not expired at the given time.
 #[must_use]
 pub fn is_fresh(evidence: &Evidence, now: DateTime<Utc>) -> bool {
-    now <= evidence.expires_at
+    now < evidence.expires_at
 }
 
 #[cfg(test)]
@@ -96,7 +96,10 @@ mod tests {
     fn is_fresh_at_boundary() {
         let observed = Utc::now();
         let ev = make_evidence(EvidenceType::VulnScan, observed);
-        assert!(is_fresh(&ev, ev.expires_at));
+        assert!(
+            !is_fresh(&ev, ev.expires_at),
+            "boundary now==expires_at should be stale"
+        );
     }
 
     #[test]
@@ -105,5 +108,76 @@ mod tests {
         let ev = make_evidence(EvidenceType::VulnScan, observed);
         let after = ev.expires_at + Duration::seconds(1);
         assert!(!is_fresh(&ev, after));
+    }
+
+    #[test]
+    fn each_evidence_type_correct_period() {
+        // Exhaustively verify all 9 evidence types return the expected duration
+        let cases = [
+            (EvidenceType::ChaosExperiment, 90),
+            (EvidenceType::GameDay, 180),
+            (EvidenceType::PenTest, 365),
+            (EvidenceType::AuditFinding, 365),
+            (EvidenceType::VulnScan, 30),
+            (EvidenceType::DoraMetric, 30),
+            (EvidenceType::UnitTest, 30),
+            (EvidenceType::Scorecard, 14),
+            (EvidenceType::IntegrationTest, 60),
+        ];
+        for (et, expected_days) in cases {
+            assert_eq!(
+                freshness_period(&et).num_days(),
+                expected_days,
+                "Freshness period mismatch for {et}"
+            );
+        }
+    }
+
+    #[test]
+    fn compute_expires_at_each_type() {
+        use chrono::TimeZone;
+        let observed = Utc.with_ymd_and_hms(2026, 1, 1, 0, 0, 0).unwrap();
+        let cases = [
+            (EvidenceType::ChaosExperiment, 90),
+            (EvidenceType::GameDay, 180),
+            (EvidenceType::PenTest, 365),
+            (EvidenceType::AuditFinding, 365),
+            (EvidenceType::VulnScan, 30),
+            (EvidenceType::DoraMetric, 30),
+            (EvidenceType::UnitTest, 30),
+            (EvidenceType::Scorecard, 14),
+            (EvidenceType::IntegrationTest, 60),
+        ];
+        for (et, expected_days) in cases {
+            let expires = compute_expires_at(observed, &et);
+            assert_eq!(
+                (expires - observed).num_days(),
+                expected_days,
+                "compute_expires_at mismatch for {et}"
+            );
+        }
+    }
+
+    #[test]
+    fn is_fresh_just_before_expiry() {
+        let observed = Utc::now();
+        let ev = make_evidence(EvidenceType::Scorecard, observed);
+        let just_before = ev.expires_at - Duration::seconds(1);
+        assert!(is_fresh(&ev, just_before));
+    }
+
+    #[test]
+    fn is_fresh_one_millisecond_after_expiry() {
+        let observed = Utc::now();
+        let ev = make_evidence(EvidenceType::Scorecard, observed);
+        let just_after = ev.expires_at + Duration::milliseconds(1);
+        assert!(!is_fresh(&ev, just_after));
+    }
+
+    #[test]
+    fn is_fresh_at_observation_time() {
+        let observed = Utc::now();
+        let ev = make_evidence(EvidenceType::GameDay, observed);
+        assert!(is_fresh(&ev, observed));
     }
 }

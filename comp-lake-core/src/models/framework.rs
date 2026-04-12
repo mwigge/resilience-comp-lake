@@ -17,7 +17,10 @@ impl FrameworkId {
         if id.is_empty() {
             return Err(FrameworkIdError::Empty);
         }
-        if !id.chars().all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == '.') {
+        if !id
+            .chars()
+            .all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == '.')
+        {
             return Err(FrameworkIdError::InvalidChars);
         }
         Ok(Self(id))
